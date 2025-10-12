@@ -55,15 +55,59 @@ if ! command -v docker &> /dev/null; then
     sudo sh get-docker.sh
     sudo usermod -aG docker $USER
     rm get-docker.sh
-    print_warning "Please logout and login again to apply Docker group changes, then run this script again."
+    
+    # Start and enable Docker service
+    sudo systemctl start docker
+    sudo systemctl enable docker
+    
+    print_warning "Docker installed. Please logout and login again to apply Docker group changes, then run this script again."
     exit 0
+fi
+
+# Check if Docker daemon is running
+if ! docker info &> /dev/null; then
+    print_status "Starting Docker daemon..."
+    sudo systemctl start docker
+    sudo systemctl enable docker
+    
+    # Wait a moment for Docker to start
+    sleep 3
+    
+    # Check if user is in docker group
+    if ! groups $USER | grep -q docker; then
+        print_status "Adding user to docker group..."
+        sudo usermod -aG docker $USER
+        print_warning "User added to docker group. Please logout and login again, then run this script again."
+        exit 0
+    fi
+    
+    # If still can't access Docker, try with sudo
+    if ! docker info &> /dev/null; then
+        print_warning "Docker daemon is running but user permissions not applied yet."
+        print_warning "Please logout and login again, or run: newgrp docker"
+        print_warning "Then run this script again."
+        exit 0
+    fi
 fi
 
 # Install Docker Compose if not installed
 if ! command -v docker-compose &> /dev/null; then
     print_status "Installing Docker Compose..."
-    sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-    sudo chmod +x /usr/local/bin/docker-compose
+    
+    # Try to install via apt first (Ubuntu 24 has it in repos)
+    if sudo apt install docker-compose-plugin -y 2>/dev/null; then
+        print_status "Docker Compose installed via apt"
+    else
+        # Fallback to manual installation
+        sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+        sudo chmod +x /usr/local/bin/docker-compose
+    fi
+fi
+
+# Verify Docker Compose installation
+if ! command -v docker-compose &> /dev/null && ! docker compose version &> /dev/null; then
+    print_error "Docker Compose installation failed"
+    exit 1
 fi
 
 # Install Nginx if not installed
@@ -178,8 +222,16 @@ chmod 755 uploads
 
 # Build and start services
 print_status "Building and starting services..."
-docker-compose -f docker-compose.prod.yml down --remove-orphans
-docker-compose -f docker-compose.prod.yml up -d --build
+
+# Use docker compose (new syntax) if available, otherwise docker-compose
+if docker compose version &> /dev/null; then
+    DOCKER_COMPOSE_CMD="docker compose"
+else
+    DOCKER_COMPOSE_CMD="docker-compose"
+fi
+
+$DOCKER_COMPOSE_CMD -f docker-compose.prod.yml down --remove-orphans
+$DOCKER_COMPOSE_CMD -f docker-compose.prod.yml up -d --build
 
 # Wait for services to be healthy
 print_status "Waiting for services to be healthy..."
@@ -187,10 +239,10 @@ sleep 30
 
 # Check service health
 print_status "Checking service health..."
-if docker-compose -f docker-compose.prod.yml ps | grep -q "Up (healthy)"; then
+if $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml ps | grep -q "Up (healthy)"; then
     print_status "All services are healthy!"
 else
-    print_warning "Some services may not be healthy. Check logs with: docker-compose -f docker-compose.prod.yml logs"
+    print_warning "Some services may not be healthy. Check logs with: $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml logs"
 fi
 
 # Configure Nginx
@@ -289,8 +341,15 @@ echo "🔄 Updating Urutte.com application..."
 git pull
 
 # Rebuild and restart services
-docker-compose -f docker-compose.prod.yml down
-docker-compose -f docker-compose.prod.yml up -d --build
+# Use docker compose (new syntax) if available, otherwise docker-compose
+if docker compose version &> /dev/null; then
+    DOCKER_COMPOSE_CMD="docker compose"
+else
+    DOCKER_COMPOSE_CMD="docker-compose"
+fi
+
+$DOCKER_COMPOSE_CMD -f docker-compose.prod.yml down
+$DOCKER_COMPOSE_CMD -f docker-compose.prod.yml up -d --build
 
 echo "✅ Update completed!"
 EOF
@@ -301,7 +360,7 @@ chmod +x update.sh
 print_status "Performing final status check..."
 echo ""
 echo -e "${BLUE}📊 Service Status:${NC}"
-docker-compose -f docker-compose.prod.yml ps
+$DOCKER_COMPOSE_CMD -f docker-compose.prod.yml ps
 
 echo ""
 echo -e "${BLUE}🌐 Application URLs:${NC}"
@@ -311,8 +370,8 @@ echo "Health Check: http://$DOMAIN/api/health"
 
 echo ""
 echo -e "${BLUE}📝 Useful Commands:${NC}"
-echo "View logs: docker-compose -f docker-compose.prod.yml logs -f"
-echo "Restart services: docker-compose -f docker-compose.prod.yml restart"
+echo "View logs: $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml logs -f"
+echo "Restart services: $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml restart"
 echo "Update application: ./update.sh"
 echo "Backup data: ./backup.sh"
 
