@@ -1,0 +1,126 @@
+# Backend Docker Ignore File
+# Optimize backend Docker builds
+
+# ===========================================
+# Build Outputs
+# ===========================================
+build/
+target/
+out/
+
+# ===========================================
+# IDE and Editor Files
+# ===========================================
+.vscode/
+.idea/
+*.iml
+*.ipr
+*.iws
+.settings/
+.project
+.classpath
+
+# ===========================================
+# OS Files
+# ===========================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*~
+
+# ===========================================
+# Logs and Temporary Files
+# ===========================================
+*.log
+logs/
+log/
+*.tmp
+*.temp
+*.swp
+*.swo
+
+# ===========================================
+# Gradle
+# ===========================================
+.gradle/
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
+
+# ===========================================
+# Maven
+# ===========================================
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# ===========================================
+# Documentation
+# ===========================================
+README*.md
+CHANGELOG*.md
+LICENSE*
+*.md
+
+# ===========================================
+# Git
+# ===========================================
+.git/
+.gitignore
+.gitattributes
+
+# ===========================================
+# Environment Files
+# ===========================================
+.env
+.env.*
+!.env.example
+!.env.template
+
+# ===========================================
+# Database Files
+# ===========================================
+*.db
+*.sqlite
+*.sqlite3
+*.sql.backup
+*.dump
+
+# ===========================================
+# Archive Files
+# ===========================================
+*.zip
+*.tar.gz
+*.rar
+*.7z
+
+# ===========================================
+# Keep Important Files
+# ===========================================
+
+# Keep source code
+!src/
+
+# Keep package files
+!build.gradle
+!gradle-wrapper.properties
+!gradle-wrapper.jar
+!gradlew
+!gradlew.bat
+
+# Keep Docker files
+!Dockerfile*
+
+# Keep configuration templates
+!*.example
+!*.template
