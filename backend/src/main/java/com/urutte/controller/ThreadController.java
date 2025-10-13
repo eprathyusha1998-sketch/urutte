@@ -20,7 +20,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/threads")
-@CrossOrigin(origins = {"http://localhost", "http://localhost:80", "http://frontend"})
+@CrossOrigin(origins = {"http://localhost", "http://localhost:80", "http://frontend", "https://urutte.com", "https://www.urutte.com"})
 public class ThreadController {
     
     @Autowired

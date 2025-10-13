@@ -27,7 +27,9 @@ public class CorsFilter implements Filter {
             origin.equals("http://localhost") ||
             origin.equals("http://localhost:80") ||
             origin.equals("http://localhost:3000") ||
-            origin.equals("http://localhost:3001")
+            origin.equals("http://localhost:3001") ||
+            origin.equals("https://urutte.com") ||
+            origin.equals("https://www.urutte.com")
         )) {
             response.setHeader("Access-Control-Allow-Origin", origin);
             response.setHeader("Access-Control-Allow-Credentials", "true");
