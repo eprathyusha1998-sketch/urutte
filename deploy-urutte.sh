@@ -77,8 +77,22 @@ echo '✅ Dependencies installation completed'
 
 # Step 2: Clean up
 echo '🧹 Step 2: Cleaning up existing deployment...'
+
+# Stop and remove existing containers by name
+echo 'Stopping and removing existing containers...'
+docker stop urutte-postgres-prod urutte-backend-prod urutte-frontend-prod urutte-nginx-prod 2>/dev/null || true
+docker rm urutte-postgres-prod urutte-backend-prod urutte-frontend-prod urutte-nginx-prod 2>/dev/null || true
+
+# Remove any existing docker-compose containers
 docker compose -f docker-compose.prod.yml down --remove-orphans 2>/dev/null || true
+
+# Remove any containers with similar names
+docker ps -a --filter "name=urutte" --format "{{.Names}}" | xargs -r docker stop 2>/dev/null || true
+docker ps -a --filter "name=urutte" --format "{{.Names}}" | xargs -r docker rm 2>/dev/null || true
+
+# Clean up unused images and containers
 docker system prune -f
+
 echo '✅ Cleanup completed'
 
 # Step 3: Build backend
