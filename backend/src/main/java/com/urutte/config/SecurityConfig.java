@@ -28,10 +28,10 @@ public class SecurityConfig {
             .oauth2Login(oauth2 -> oauth2
                 .loginPage("/oauth2/authorization/google")
                 .successHandler(oAuth2LoginSuccessHandler)
-                .failureUrl("http://localhost/login?error=true")
+                .failureUrl("/login?error=true")
             )
             .logout(logout -> logout
-                .logoutSuccessUrl("http://localhost/login")
+                .logoutSuccessUrl("/login")
                 .invalidateHttpSession(true)
                 .clearAuthentication(true)
             );
