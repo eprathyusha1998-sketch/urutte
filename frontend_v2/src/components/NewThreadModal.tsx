@@ -159,11 +159,42 @@ const NewThreadModal: React.FC<NewThreadModalProps> = ({
     onClose();
   };
 
+  // Handle body scroll lock when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden relative">
+    <div 
+      className="fixed inset-0 flex items-center justify-center z-50 p-4"
+      style={{ 
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        backdropFilter: 'blur(4px)'
+      }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          handleClose();
+        }
+      }}
+    >
+      <div 
+        className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden relative shadow-2xl"
+        style={{
+          border: '1px solid rgba(0, 0, 0, 0.1)',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+        }}
+      >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-slate-700">
           <button
@@ -177,14 +208,12 @@ const NewThreadModal: React.FC<NewThreadModalProps> = ({
             New thread
           </h2>
           
-          <div className="flex items-center gap-2">
-            <button className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors">
-              <IonIcon icon={documentText} className="text-xl text-black dark:text-white" />
-            </button>
-            <button className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors">
-              <IonIcon icon={ellipsisHorizontal} className="text-xl text-black dark:text-white" />
-            </button>
-          </div>
+          <button
+            onClick={handleClose}
+            className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+          >
+            <IonIcon icon={close} className="text-xl text-black dark:text-white" />
+          </button>
         </div>
 
         {/* Main Content */}
