@@ -4,7 +4,7 @@ import { IonIcon } from '@ionic/react';
 import { logoFacebook, logoTwitter, logoGoogle } from 'ionicons/icons';
 import { authApi } from '../services/api';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://urutte.com/api';
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
