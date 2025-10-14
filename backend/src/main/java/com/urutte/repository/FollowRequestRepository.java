@@ -39,6 +39,10 @@ public interface FollowRequestRepository extends JpaRepository<FollowRequest, Lo
     // Delete follow request by requester and target
     void deleteByRequesterAndTarget(User requester, User target);
     
+    // Get pending follow requests to AI users older than specified time
+    @Query("SELECT fr FROM FollowRequest fr WHERE fr.target.email = 'ai@urutte.com' AND fr.status = 'PENDING' AND fr.createdAt < :cutoffTime")
+    List<FollowRequest> findPendingFollowRequestsToAiUserOlderThan(@Param("cutoffTime") java.time.Instant cutoffTime);
+    
     // Get follow request by IDs
     @Query("SELECT fr FROM FollowRequest fr WHERE fr.requester.id = :requesterId AND fr.target.id = :targetId")
     Optional<FollowRequest> findByRequesterIdAndTargetId(@Param("requesterId") String requesterId, @Param("targetId") String targetId);

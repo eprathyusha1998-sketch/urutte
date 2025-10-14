@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { IonIcon } from '@ionic/react';
-import { logoGoogle } from 'ionicons/icons';
+// import { IonIcon } from '@ionic/react';
+// import { logoGoogle } from 'ionicons/icons';
 import { isAuthenticated, setStoredToken, removeStoredToken, isTokenExpired } from '../utils/auth';
 import { useNotification } from '../contexts/NotificationContext';
 
@@ -85,6 +85,8 @@ const LoginPage: React.FC = () => {
     }
   };
 
+  // Google login temporarily disabled
+  /*
   const handleGoogleLogin = () => {
     // Redirect to Spring Boot OAuth2 endpoint
     if (!API_BASE_URL) {
@@ -96,6 +98,7 @@ const LoginPage: React.FC = () => {
     console.log('Redirecting to Google OAuth:', redirectUrl);
     window.location.href = redirectUrl;
   };
+  */
 
   return (
     <div className="sm:flex">
@@ -188,13 +191,14 @@ const LoginPage: React.FC = () => {
               </button>
             </div>
 
+            {/* Google Login temporarily disabled */}
+            {/* 
             <div className="text-center flex items-center gap-6"> 
               <hr className="flex-1 border-slate-200 dark:border-slate-800" /> 
               Or continue with  
               <hr className="flex-1 border-slate-200 dark:border-slate-800" />
             </div> 
 
-            {/* Social Login */}
             <div className="flex gap-2" uk-scrollspy="target: > *; cls: uk-animation-scale-up; delay: 400 ;repeat: true">
               <button 
                 type="button"
@@ -204,6 +208,7 @@ const LoginPage: React.FC = () => {
                 <IonIcon icon={logoGoogle} className="text-lg" /> Google  
               </button>
             </div>
+            */}
             
           </form>
 

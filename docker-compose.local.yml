@@ -27,9 +27,13 @@ services:
       SPRING_DATASOURCE_USERNAME: urutte_user
       SPRING_DATASOURCE_PASSWORD: urutte123
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
-      UPLOAD_DIR: /app/uploads
+      FILE_UPLOAD_DIR: /app/uploads
+      SPRING_SERVLET_MULTIPART_MAX_FILE_SIZE: 10MB
+      SPRING_SERVLET_MULTIPART_MAX_REQUEST_SIZE: 10MB
     ports:
       - "8080:8080"
+    volumes:
+      - backend_uploads_local:/app/uploads
     depends_on:
       postgres:
         condition: service_healthy
@@ -55,3 +59,6 @@ services:
 
 volumes:
   postgres_local_data:
+    driver: local
+  backend_uploads_local:
+    driver: local

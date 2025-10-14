@@ -286,7 +286,7 @@ const NewThreadModal: React.FC<NewThreadModalProps> = ({
       }}
     >
       <div 
-        className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden relative shadow-2xl"
+        className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-2xl max-h-[90vh] relative shadow-2xl"
         style={{
           border: '1px solid rgba(0, 0, 0, 0.1)',
           boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
@@ -495,7 +495,7 @@ const NewThreadModal: React.FC<NewThreadModalProps> = ({
             
             {/* Reply Permission Dropdown */}
             {showReplyPermissionDropdown && (
-              <div className="absolute bottom-full left-0 mb-2 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-gray-200 dark:border-slate-700 py-1 min-w-[200px] z-50">
+              <div className="absolute top-full left-0 mt-2 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-gray-200 dark:border-slate-700 py-1 min-w-[200px] z-50">
                 <button
                   onClick={() => {
                     setReplyPermission('ANYONE');

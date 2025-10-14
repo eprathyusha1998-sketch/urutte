@@ -60,12 +60,18 @@ export const authApi = {
   },
   
   login: (email: string, password: string) => {
+    // Google OAuth temporarily disabled
+    console.warn('Google OAuth login is temporarily disabled');
+    return;
+    
+    /* 
     // For OAuth, we'll redirect to the OAuth endpoint
     if (!API_BASE_URL) {
       console.error('API_BASE_URL is not defined. Cannot redirect to OAuth.');
       return;
     }
     window.location.href = `${API_BASE_URL.replace('/api', '')}/oauth2/authorization/google`;
+    */
   },
   
   logout: async () => {

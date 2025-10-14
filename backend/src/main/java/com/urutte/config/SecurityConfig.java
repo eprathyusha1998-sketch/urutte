@@ -59,6 +59,9 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authz -> authz
                 .requestMatchers("/", "/login**", "/oauth2/**", "/error", "/api/auth/**", "/ws/**").permitAll()
+                .requestMatchers("/api/ai-content/**").permitAll()
+                .requestMatchers("/api/ai-follow-requests/**").permitAll()
+                .requestMatchers("/api/threads/**").permitAll()
                 .requestMatchers("/api/**").authenticated()
                 .anyRequest().permitAll()
             )

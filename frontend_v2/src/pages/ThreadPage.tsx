@@ -273,7 +273,7 @@ const ThreadPage: React.FC = () => {
               <textarea 
                 className="w-full bg-transparent border-none outline-none text-gray-700 dark:text-gray-300 placeholder-gray-500 dark:placeholder-gray-400 resize-none"
                 rows={4}
-                placeholder="Add a comment..."
+                placeholder="Add a comment to quote this post..."
                 value={quoteContent}
                 onChange={(e) => setQuoteContent(e.target.value)}
                 maxLength={2000}
