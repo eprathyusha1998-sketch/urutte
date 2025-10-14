@@ -2,25 +2,23 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IonIcon } from '@ionic/react';
 import { 
-  image, 
-  happy, 
-  location, 
   closeOutline, 
-  chatboxEllipsesOutline,
   add
 } from 'ionicons/icons';
-import { authApi, threadsApi, messagesApi } from '../services/api';
+import { authApi, threadsApi } from '../services/api';
 import Sidebar from '../components/Sidebar';
 import ThreadCard from '../components/ThreadCard';
 import NewThreadModal from '../components/NewThreadModal';
+import SuggestedUsers from '../components/SuggestedUsers';
+import FollowRequests from '../components/FollowRequests';
 import { Thread, User } from '../types.d';
+import { generateInitials, getInitialsBackgroundColor } from '../utils/profileUtils';
 
 const FeedPage: React.FC = () => {
   const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [threads, setThreads] = useState<Thread[]>([]);
   const [loading, setLoading] = useState(true);
-  const [messageCount, setMessageCount] = useState(0);
   const [showRepostModal, setShowRepostModal] = useState(false);
   const [repostingPost, setRepostingPost] = useState<Thread | null>(null);
   const [quoteContent, setQuoteContent] = useState('');
@@ -42,14 +40,6 @@ const FeedPage: React.FC = () => {
         const threadsData = feedData.content || feedData;
         setThreads(threadsData);
 
-        // Fetch message counts
-
-        try {
-          const messages = await messagesApi.getConversationPartners();
-          setMessageCount(messages.length || 0);
-        } catch (error) {
-          console.warn('Failed to fetch messages:', error);
-        }
 
         setLoading(false);
       } catch (error) {
@@ -153,7 +143,7 @@ const FeedPage: React.FC = () => {
   }
 
   return (
-    <div id="wrapper">
+    <div id="wrapper" className="bg-gray-100 dark:bg-slate-900">
       {/* Sidebar */}
       <Sidebar 
         currentUser={currentUser}
@@ -163,11 +153,14 @@ const FeedPage: React.FC = () => {
         isDarkMode={document.documentElement.classList.contains('dark')}
         onLogout={handleLogout}
         onCreateThread={() => setShowNewThreadModal(true)}
+        isCreateModalOpen={showNewThreadModal}
       />
 
       {/* Main Content */}
-      <main id="site__main" className="p-2.5 h-screen">
-        <div className="max-w-2xl mx-auto" id="js-oversized">
+      <main id="site__main" className="p-2.5 h-[calc(100vh-var(--m-top))] mt-[--m-top] bg-white">
+        <div className="max-w-6xl mx-auto flex gap-12" id="js-oversized">
+          {/* Feed Content */}
+          <div className="flex-1 max-w-2xl">
           {/* Center Feed */}
           <div className="space-y-6">
             {/* Create Post Button */}
@@ -230,6 +223,15 @@ const FeedPage: React.FC = () => {
               ))
             )}
           </div>
+          </div>
+          
+          {/* Right Sidebar */}
+          <div className="w-[360px] flex-shrink-0">
+            <div className="sticky top-4 space-y-4">
+              <FollowRequests currentUser={currentUser} />
+              <SuggestedUsers currentUser={currentUser} />
+            </div>
+          </div>
         </div>
       </main>
 
@@ -254,11 +256,21 @@ const FeedPage: React.FC = () => {
             {/* Original Post */}
             <div className="mb-4 p-3 bg-gray-50 dark:bg-slate-700 rounded-lg">
               <div className="flex items-center gap-2 mb-2">
-                <img 
-                  src={repostingPost.userPicture || "/assets/images/avatars/avatar-3.jpg"} 
-                  alt={repostingPost.userName} 
-                  className="w-6 h-6 rounded-full" 
-                />
+                {repostingPost.userPicture ? (
+                  <img 
+                    src={repostingPost.userPicture} 
+                    alt={repostingPost.userName} 
+                    className="w-6 h-6 rounded-full object-cover" 
+                  />
+                ) : (
+                  <div className="w-6 h-6 rounded-full bg-gray-100 dark:bg-slate-600 flex items-center justify-center">
+                    <div className={`w-5 h-5 rounded-full ${getInitialsBackgroundColor(repostingPost.userName || '')} flex items-center justify-center`}>
+                      <span className="text-white text-xs font-semibold">
+                        {generateInitials(repostingPost.userName || 'U')}
+                      </span>
+                    </div>
+                  </div>
+                )}
                 <span className="font-semibold text-sm text-gray-900 dark:text-white">
                   {repostingPost.userName}
                 </span>

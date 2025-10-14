@@ -17,6 +17,9 @@ import {
   thumbsUp
 } from 'ionicons/icons';
 import { Thread, User } from '../types.d';
+import { getMediaUrl } from '../utils/mediaUtils';
+import { generateInitials, getInitialsBackgroundColor } from '../utils/profileUtils';
+import { getProfileImageUrl } from '../utils/mediaUtils';
 
 interface ThreadCardProps {
   thread: Thread;
@@ -170,7 +173,7 @@ const ThreadCard: React.FC<ThreadCardProps> = ({
           <div className="w-10 h-10 rounded-full bg-gray-300 dark:bg-slate-600 flex items-center justify-center overflow-hidden">
             {thread.userPicture ? (
               <img
-                src={thread.userPicture}
+                src={getProfileImageUrl(thread.userPicture)}
                 alt={thread.userName}
                 className="w-full h-full object-cover"
                 onError={(e) => {
@@ -181,12 +184,16 @@ const ThreadCard: React.FC<ThreadCardProps> = ({
                 }}
               />
             ) : null}
-            <span 
-              className="text-sm font-semibold text-gray-600 dark:text-gray-300 w-full h-full flex items-center justify-center"
+            <div 
+              className="w-full h-full bg-gray-100 dark:bg-slate-600 flex items-center justify-center"
               style={{ display: thread.userPicture ? 'none' : 'flex' }}
             >
-              {thread.userName?.charAt(0)?.toUpperCase() || 'U'}
-            </span>
+              <div className={`w-8 h-8 rounded-full ${getInitialsBackgroundColor(thread.userName || '')} flex items-center justify-center`}>
+                <span className="text-white text-sm font-semibold">
+                  {generateInitials(thread.userName || 'U')}
+                </span>
+              </div>
+            </div>
           </div>
           <div>
             <div className="flex items-center space-x-1">
@@ -225,14 +232,18 @@ const ThreadCard: React.FC<ThreadCardProps> = ({
             <div className="w-6 h-6 rounded-full bg-gray-300 dark:bg-slate-600 flex items-center justify-center overflow-hidden">
               {thread.quotedThread.userPicture ? (
                 <img
-                  src={thread.quotedThread.userPicture}
+                  src={getProfileImageUrl(thread.quotedThread.userPicture)}
                   alt={thread.quotedThread.userName}
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <span className="text-xs font-semibold text-gray-600 dark:text-gray-300">
-                  {thread.quotedThread.userName?.charAt(0)?.toUpperCase() || 'U'}
-                </span>
+                <div className="w-full h-full bg-gray-100 dark:bg-slate-600 flex items-center justify-center">
+                  <div className={`w-5 h-5 rounded-full ${getInitialsBackgroundColor(thread.quotedThread.userName || '')} flex items-center justify-center`}>
+                    <span className="text-white text-xs font-semibold">
+                      {generateInitials(thread.quotedThread.userName || 'U')}
+                    </span>
+                  </div>
+                </div>
               )}
             </div>
             <span className="font-semibold text-sm text-gray-900 dark:text-white">
@@ -278,7 +289,7 @@ const ThreadCard: React.FC<ThreadCardProps> = ({
               <div key={media.id} className="relative">
                 {media.mediaType?.toLowerCase() === 'image' ? (
                   <img
-                    src={media.mediaUrl.startsWith('http') ? media.mediaUrl : `http://localhost:8080/${media.mediaUrl}`}
+                    src={getMediaUrl(media.mediaUrl)}
                     alt={media.altText || 'Thread media'}
                     className={`w-full rounded-lg object-cover ${
                       thread.media && thread.media.length === 1 ? 'max-h-96' : 'aspect-square'
@@ -290,7 +301,7 @@ const ThreadCard: React.FC<ThreadCardProps> = ({
                   />
                 ) : media.mediaType?.toLowerCase() === 'video' ? (
                   <video
-                    src={media.mediaUrl.startsWith('http') ? media.mediaUrl : `http://localhost:8080/${media.mediaUrl}`}
+                    src={getMediaUrl(media.mediaUrl)}
                     controls
                     className={`w-full rounded-lg ${
                       thread.media && thread.media.length === 1 ? 'max-h-96' : 'aspect-square'

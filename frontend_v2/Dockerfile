@@ -12,6 +12,9 @@ RUN npm install
 # Copy source code
 COPY . .
 
+# Remove production environment file to prevent conflicts
+RUN rm -f .env.production
+
 # Set environment variables for build
 ARG REACT_APP_API_URL=http://localhost:8080/api
 ARG REACT_APP_WS_URL=http://localhost:8080/ws

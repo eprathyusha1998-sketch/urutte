@@ -7,11 +7,14 @@ import com.urutte.repository.FollowRepository;
 import com.urutte.repository.FollowRequestRepository;
 import com.urutte.repository.PostRepository;
 import com.urutte.repository.UserRepository;
+import com.urutte.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
@@ -37,6 +40,9 @@ public class UserService {
     @Autowired
     private NotificationService notificationService;
     
+    @Autowired
+    private JwtUtil jwtUtil;
+    
     public User getOrCreateUser(String userId) {
         return userRepository.findById(userId)
             .orElseThrow(() -> new RuntimeException("User not found"));
@@ -48,15 +54,70 @@ public class UserService {
     }
     
     public User getUserFromToken(String token) {
-        // For now, we'll use the token as the user ID
-        // In production, you would validate the JWT token and extract the user ID
-        // This is a simplified implementation for development
         try {
-            return userRepository.findById(token)
-                .orElse(null);
+            if (jwtUtil.validateToken(token)) {
+                String userId = jwtUtil.extractUserId(token);
+                return userRepository.findById(userId).orElse(null);
+            }
+            return null;
         } catch (Exception e) {
             return null;
         }
+    }
+    
+    public UserDto updateUserProfile(String userId, String name, String username, String bio, 
+                                   String location, String website, String phoneNumber, 
+                                   String dateOfBirth, String gender, Boolean isPrivate,
+                                   MultipartFile profileImage, MultipartFile coverImage) throws IOException {
+        
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        // Update basic fields
+        if (name != null && !name.trim().isEmpty()) {
+            user.setName(name.trim());
+        }
+        if (username != null && !username.trim().isEmpty()) {
+            user.setUsername(username.trim());
+        }
+        if (bio != null) {
+            user.setBio(bio.trim());
+        }
+        if (location != null) {
+            user.setLocation(location.trim());
+        }
+        if (website != null) {
+            user.setWebsite(website.trim());
+        }
+        if (phoneNumber != null) {
+            user.setPhoneNumber(phoneNumber.trim());
+        }
+        if (dateOfBirth != null) {
+            user.setDateOfBirth(dateOfBirth.trim());
+        }
+        if (gender != null) {
+            user.setGender(gender.trim());
+        }
+        if (isPrivate != null) {
+            user.setIsPrivate(isPrivate);
+        }
+        
+        // Handle profile image upload
+        if (profileImage != null && !profileImage.isEmpty()) {
+            String profileImagePath = profilePictureService.uploadProfileImage(profileImage, userId);
+            user.setPicture("/" + profileImagePath);
+        }
+        
+        // Handle cover image upload
+        if (coverImage != null && !coverImage.isEmpty()) {
+            String coverImagePath = profilePictureService.uploadCoverImage(coverImage, userId);
+            user.setCoverPhoto("/" + coverImagePath);
+        }
+        
+        user.setUpdatedAt(java.time.Instant.now());
+        user = userRepository.save(user);
+        
+        return convertToDto(user, userId);
     }
     
     public User getOrCreateUser(OidcUser oidcUser) {
@@ -191,9 +252,26 @@ public class UserService {
         List<User> following = followRepository.findFollowingByUserId(currentUserId);
         List<String> followingIds = following.stream().map(User::getId).collect(java.util.stream.Collectors.toList());
         
+        // Get users who have been rejected within the last 3 months
+        java.time.Instant threeMonthsAgo = java.time.Instant.now().minus(90, java.time.temporal.ChronoUnit.DAYS);
+        List<FollowRequest> recentRejections = followRequestRepository.findByRequesterIdAndStatusAndUpdatedAtAfter(
+            currentUserId, FollowRequest.FollowRequestStatus.REJECTED, threeMonthsAgo);
+        List<String> recentlyRejectedIds = recentRejections.stream()
+            .map(req -> req.getTarget().getId())
+            .collect(java.util.stream.Collectors.toList());
+        
+        // Get users who have pending follow requests from current user
+        List<FollowRequest> pendingRequests = followRequestRepository.findByRequesterIdAndStatusAndUpdatedAtAfter(
+            currentUserId, FollowRequest.FollowRequestStatus.PENDING, java.time.Instant.EPOCH);
+        List<String> pendingRequestIds = pendingRequests.stream()
+            .map(req -> req.getTarget().getId())
+            .collect(java.util.stream.Collectors.toList());
+        
         List<User> suggestedUsers = allUsers.stream()
             .filter(user -> !user.getId().equals(currentUserId)) // Not current user
             .filter(user -> !followingIds.contains(user.getId())) // Not already following
+            .filter(user -> !recentlyRejectedIds.contains(user.getId())) // Not recently rejected
+            .filter(user -> !pendingRequestIds.contains(user.getId())) // Not already have pending request
             .limit(limit)
             .collect(java.util.stream.Collectors.toList());
         
@@ -206,6 +284,37 @@ public class UserService {
         User currentUser = getOrCreateUser(currentUserId);
         return followRequestRepository.findByTargetAndStatusOrderByCreatedAtDesc(
             currentUser, FollowRequest.FollowRequestStatus.PENDING);
+    }
+    
+    public FollowRequest sendFollowRequest(String requesterId, String targetId) {
+        User requester = getOrCreateUser(requesterId);
+        User target = getOrCreateUser(targetId);
+        
+        // Check if already following
+        if (followRepository.existsByFollowerIdAndFollowingId(requesterId, targetId)) {
+            throw new RuntimeException("Already following this user");
+        }
+        
+        // Check if follow request already exists
+        Optional<FollowRequest> existingRequest = followRequestRepository.findByRequesterAndTarget(requester, target);
+        if (existingRequest.isPresent()) {
+            FollowRequest request = existingRequest.get();
+            if (request.getStatus() == FollowRequest.FollowRequestStatus.PENDING) {
+                throw new RuntimeException("Follow request already pending");
+            } else if (request.getStatus() == FollowRequest.FollowRequestStatus.APPROVED) {
+                throw new RuntimeException("Already following this user");
+            }
+        }
+        
+        // Create new follow request
+        FollowRequest followRequest = new FollowRequest();
+        followRequest.setRequester(requester);
+        followRequest.setTarget(target);
+        followRequest.setStatus(FollowRequest.FollowRequestStatus.PENDING);
+        followRequest.setCreatedAt(java.time.Instant.now());
+        followRequest.setUpdatedAt(java.time.Instant.now());
+        
+        return followRequestRepository.save(followRequest);
     }
     
     public UserDto approveFollowRequest(Long followRequestId, String currentUserId) {
@@ -266,10 +375,20 @@ public class UserService {
         dto.setId(user.getId());
         dto.setName(user.getName());
         dto.setEmail(user.getEmail());
+        dto.setUsername(user.getUsername());
         dto.setPicture(user.getPicture());
+        dto.setCoverPhoto(user.getCoverPhoto());
         dto.setBio(user.getBio());
         dto.setLocation(user.getLocation());
         dto.setWebsite(user.getWebsite());
+        dto.setPhoneNumber(user.getPhoneNumber());
+        dto.setDateOfBirth(user.getDateOfBirth());
+        dto.setGender(user.getGender());
+        dto.setCreatedAt(user.getCreatedAt());
+        dto.setUpdatedAt(user.getUpdatedAt());
+        dto.setVerified(user.getIsVerified());
+        dto.setPrivate(user.getIsPrivate());
+        dto.setActive(user.getIsActive());
         
         // Set counts
         dto.setFollowersCount(followRepository.countByFollowing(user));

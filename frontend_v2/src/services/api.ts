@@ -1,6 +1,11 @@
 import axios from 'axios';
+import { getAuthHeaders, removeStoredToken } from '../utils/auth';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://urutte.com/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL;
+
+if (!API_BASE_URL) {
+  console.error('REACT_APP_API_URL is not defined. Please check your environment configuration.');
+}
 
 // Create axios instance with default config
 const api = axios.create({
@@ -14,9 +19,9 @@ const api = axios.create({
 // Add request interceptor to include auth token
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('access_token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    const authHeaders = getAuthHeaders() as any;
+    if (authHeaders.Authorization) {
+      config.headers.Authorization = authHeaders.Authorization;
     }
     return config;
   },
@@ -31,8 +36,7 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       // Unauthorized - redirect to login
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('user');
+      removeStoredToken();
       window.location.href = '/login';
     }
     return Promise.reject(error);
@@ -46,8 +50,21 @@ export const authApi = {
     return response.data;
   },
   
+  updateProfile: async (formData: FormData) => {
+    const response = await api.put('/users/me', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+  
   login: (email: string, password: string) => {
     // For OAuth, we'll redirect to the OAuth endpoint
+    if (!API_BASE_URL) {
+      console.error('API_BASE_URL is not defined. Cannot redirect to OAuth.');
+      return;
+    }
     window.location.href = `${API_BASE_URL.replace('/api', '')}/oauth2/authorization/google`;
   },
   
@@ -152,6 +169,14 @@ export const threadsApi = {
   // Like a thread
   likeThread: async (threadId: number) => {
     const response = await api.post(`/threads/${threadId}/like`);
+    return response.data;
+  },
+
+  // Get liked threads by current user
+  getLikedThreads: async (limit: number = 10) => {
+    const response = await api.get('/threads/liked', {
+      params: { limit },
+    });
     return response.data;
   },
 
@@ -402,6 +427,11 @@ export const usersApi = {
     return response.data;
   },
 
+  unfollowUser: async (userId: string) => {
+    const response = await api.delete(`/users/${userId}/follow`);
+    return response.data;
+  },
+
   searchUsers: async (query: string) => {
     const response = await api.get(`/users/search?q=${encodeURIComponent(query)}`);
     return response.data;
@@ -424,6 +454,16 @@ export const usersApi = {
 
   rejectFollowRequest: async (followRequestId: number) => {
     const response = await api.post(`/users/follow-requests/${followRequestId}/reject`);
+    return response.data;
+  },
+
+  getPendingFollowRequests: async () => {
+    const response = await api.get('/users/follow-requests/pending');
+    return response.data;
+  },
+
+  sendFollowRequest: async (userId: string) => {
+    const response = await api.post(`/users/${userId}/follow-request`);
     return response.data;
   },
 };

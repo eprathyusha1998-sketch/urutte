@@ -1,11 +1,15 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { IonIcon } from '@ionic/react';
-import { arrowBack, closeOutline } from 'ionicons/icons';
+import { closeOutline } from 'ionicons/icons';
 import { threadsApi, authApi } from '../services/api';
 import Sidebar from '../components/Sidebar';
 import ThreadView from '../components/ThreadView';
+import NewThreadModal from '../components/NewThreadModal';
+import SuggestedUsers from '../components/SuggestedUsers';
+import FollowRequests from '../components/FollowRequests';
 import { Thread, User } from '../types.d';
+import { generateInitials, getInitialsBackgroundColor } from '../utils/profileUtils';
 
 const ThreadPage: React.FC = () => {
   const { threadId } = useParams<{ threadId: string }>();
@@ -17,8 +21,9 @@ const ThreadPage: React.FC = () => {
   const [showRepostModal, setShowRepostModal] = useState(false);
   const [repostingPost, setRepostingPost] = useState<Thread | null>(null);
   const [quoteContent, setQuoteContent] = useState('');
+  const [showNewThreadModal, setShowNewThreadModal] = useState(false);
 
-  const fetchThreadData = async () => {
+  const fetchThreadData = useCallback(async () => {
     try {
       console.log('Fetching thread data for ID:', threadId);
 
@@ -44,7 +49,7 @@ const ThreadPage: React.FC = () => {
       console.error('Error details:', error.response?.data || error.message);
       setLoading(false);
     }
-  };
+  }, [threadId]);
 
   useEffect(() => {
     const token = localStorage.getItem('access_token');
@@ -54,7 +59,7 @@ const ThreadPage: React.FC = () => {
     }
 
     fetchThreadData();
-  }, [threadId, navigate]);
+  }, [threadId, navigate, fetchThreadData]);
 
   const handleLikePost = async (postId: number) => {
     try {
@@ -95,9 +100,9 @@ const ThreadPage: React.FC = () => {
     }
   };
 
-  const handleRepost = async (postId: number) => {
+  const handleRepost = async (postId: number, quoteContent?: string) => {
     try {
-      await threadsApi.repostThread(postId);
+      await threadsApi.repostThread(postId, quoteContent);
       // Refresh the thread data to get updated counts
       fetchThreadData();
     } catch (error) {
@@ -118,6 +123,20 @@ const ThreadPage: React.FC = () => {
     } catch (error) {
       console.error('Error creating quote repost:', error);
       alert('Failed to create quote repost. Please try again.');
+    }
+  };
+
+  const handleCreateNewThread = async (content: string, mediaFiles?: File[], replyPermission?: 'ANYONE' | 'FOLLOWERS' | 'FOLLOWING' | 'MENTIONED_ONLY') => {
+    try {
+      const response = await threadsApi.createThread(content, mediaFiles, undefined, replyPermission);
+      
+      if (response.success) {
+        setShowNewThreadModal(false);
+        // Navigate to feed to see the new thread
+        navigate('/feed');
+      }
+    } catch (error) {
+      console.error('Error creating new thread:', error);
     }
   };
 
@@ -156,7 +175,7 @@ const ThreadPage: React.FC = () => {
 
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-slate-900">
+    <div id="wrapper" className="bg-gray-100 dark:bg-slate-900">
       {/* Sidebar */}
       <Sidebar 
         currentUser={currentUser}
@@ -165,21 +184,34 @@ const ThreadPage: React.FC = () => {
         }}
         isDarkMode={document.documentElement.classList.contains('dark')}
         onLogout={handleLogout}
+        onCreateThread={() => setShowNewThreadModal(true)}
+        isCreateModalOpen={showNewThreadModal}
       />
 
       {/* Main Content */}
-      <main className="max-w-2xl mx-auto p-4 space-y-4">
-        {/* Thread View */}
-        <ThreadView
-          mainPost={mainPost}
-          replies={replies}
-          currentUser={currentUser}
-          onLike={handleLikePost}
-          onRepost={handleRepost}
-          onDelete={handleDeletePost}
-          onReply={handleReplyToPost}
-        />
-
+      <main id="site__main" className="p-2.5 h-[calc(100vh-var(--m-top))] mt-[--m-top] bg-white">
+        <div className="max-w-6xl mx-auto flex gap-12">
+          {/* Thread Content */}
+          <div className="flex-1 max-w-2xl">
+            <ThreadView
+              mainPost={mainPost}
+              replies={replies}
+              currentUser={currentUser}
+              onLike={handleLikePost}
+              onRepost={handleRepost}
+              onDelete={handleDeletePost}
+              onReply={handleReplyToPost}
+            />
+          </div>
+          
+          {/* Right Sidebar */}
+          <div className="w-[360px] flex-shrink-0">
+            <div className="sticky top-4 space-y-4">
+              <FollowRequests currentUser={currentUser} />
+              <SuggestedUsers currentUser={currentUser} />
+            </div>
+          </div>
+        </div>
       </main>
 
       {/* Repost Modal */}
@@ -212,11 +244,21 @@ const ThreadPage: React.FC = () => {
             {/* Original Post Preview */}
             <div className="bg-gray-50 dark:bg-slate-700 rounded-lg p-3 mb-4 border-l-4 border-blue-500">
               <div className="flex items-center gap-2 mb-2">
-                <img 
-                  src={repostingPost.userPicture || "/assets/images/avatars/avatar-3.jpg"} 
-                  alt={repostingPost.userName} 
-                  className="w-6 h-6 rounded-full" 
-                />
+                {repostingPost.userPicture ? (
+                  <img 
+                    src={repostingPost.userPicture} 
+                    alt={repostingPost.userName} 
+                    className="w-6 h-6 rounded-full object-cover" 
+                  />
+                ) : (
+                  <div className="w-6 h-6 rounded-full bg-gray-100 dark:bg-slate-600 flex items-center justify-center">
+                    <div className={`w-5 h-5 rounded-full ${getInitialsBackgroundColor(repostingPost.userName || '')} flex items-center justify-center`}>
+                      <span className="text-white text-xs font-semibold">
+                        {generateInitials(repostingPost.userName || 'U')}
+                      </span>
+                    </div>
+                  </div>
+                )}
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   {repostingPost.userName}
                 </span>
@@ -271,6 +313,14 @@ const ThreadPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* New Thread Modal */}
+      <NewThreadModal
+        isOpen={showNewThreadModal}
+        onClose={() => setShowNewThreadModal(false)}
+        currentUser={currentUser}
+        onSubmit={handleCreateNewThread}
+      />
     </div>
   );
 };

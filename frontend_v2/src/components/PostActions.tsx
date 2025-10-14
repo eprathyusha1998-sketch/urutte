@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IonIcon } from '@ionic/react';
 import { postsApi } from '../services/api';
+import { generateInitials, getInitialsBackgroundColor } from '../utils/profileUtils';
+import { getProfileImageUrl } from '../utils/mediaUtils';
 import { 
   heart,
   heartOutline,
@@ -272,11 +274,21 @@ const PostActions: React.FC<PostActionsProps> = ({
             {/* Original Post */}
             <div className="border border-gray-200 dark:border-slate-700 rounded-lg p-4 mb-4 bg-gray-50 dark:bg-slate-800">
               <div className="flex items-center gap-3 mb-2">
-                <img 
-                  src={post.userPicture || "/assets/images/avatars/avatar-2.jpg"} 
-                  alt={post.userName} 
-                  className="w-8 h-8 rounded-full" 
-                />
+                {post.userPicture ? (
+                  <img 
+                    src={getProfileImageUrl(post.userPicture)} 
+                    alt={post.userName} 
+                    className="w-8 h-8 rounded-full object-cover" 
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-slate-600 flex items-center justify-center">
+                    <div className={`w-6 h-6 rounded-full ${getInitialsBackgroundColor(post.userName || '')} flex items-center justify-center`}>
+                      <span className="text-white text-xs font-semibold">
+                        {generateInitials(post.userName || 'U')}
+                      </span>
+                    </div>
+                  </div>
+                )}
                 <div>
                   <span className="font-semibold text-gray-900 dark:text-white">{post.userName}</span>
                   <span className="text-gray-500 dark:text-gray-400 text-sm ml-2">@{post.userEmail ? post.userEmail.split('@')[0] : 'user'}</span>

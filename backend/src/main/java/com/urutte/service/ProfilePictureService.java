@@ -3,6 +3,7 @@ package com.urutte.service;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -91,5 +92,102 @@ public class ProfilePictureService {
         // Use a simple hash to consistently assign one of the default avatars
         int avatarIndex = Math.abs(userId.hashCode() % 12) + 1; // 1-12
         return "/assets/images/avatars/avatar-" + avatarIndex + ".jpg";
+    }
+    
+    /**
+     * Upload a profile image from MultipartFile
+     */
+    public String uploadProfileImage(MultipartFile file, String userId) throws IOException {
+        if (file.isEmpty()) {
+            throw new IllegalArgumentException("File is empty");
+        }
+        
+        // Validate file size
+        if (file.getSize() > MAX_FILE_SIZE) {
+            throw new IllegalArgumentException("File size exceeds maximum allowed size of 5MB");
+        }
+        
+        // Validate file type
+        String originalFilename = file.getOriginalFilename();
+        if (originalFilename == null || !isValidImageFile(originalFilename)) {
+            throw new IllegalArgumentException("Invalid file type. Only JPG, JPEG, PNG, GIF, and WEBP are allowed.");
+        }
+        
+        // Create profile upload directory if it doesn't exist
+        Path uploadPath = Paths.get(profileUploadDir);
+        if (!Files.exists(uploadPath)) {
+            Files.createDirectories(uploadPath);
+        }
+        
+        // Get file extension
+        String fileExtension = getFileExtension(originalFilename);
+        
+        // Generate unique filename
+        String filename = "profile_" + userId + "_" + UUID.randomUUID().toString() + fileExtension;
+        Path targetPath = uploadPath.resolve(filename);
+        
+        // Save the file
+        Files.copy(file.getInputStream(), targetPath, StandardCopyOption.REPLACE_EXISTING);
+        
+        // Return the relative path for serving
+        return "profiles/" + filename;
+    }
+    
+    /**
+     * Upload a cover image from MultipartFile
+     */
+    public String uploadCoverImage(MultipartFile file, String userId) throws IOException {
+        if (file.isEmpty()) {
+            throw new IllegalArgumentException("File is empty");
+        }
+        
+        // Validate file size
+        if (file.getSize() > MAX_FILE_SIZE) {
+            throw new IllegalArgumentException("File size exceeds maximum allowed size of 5MB");
+        }
+        
+        // Validate file type
+        String originalFilename = file.getOriginalFilename();
+        if (originalFilename == null || !isValidImageFile(originalFilename)) {
+            throw new IllegalArgumentException("Invalid file type. Only JPG, JPEG, PNG, GIF, and WEBP are allowed.");
+        }
+        
+        // Create profile upload directory if it doesn't exist
+        Path uploadPath = Paths.get(profileUploadDir);
+        if (!Files.exists(uploadPath)) {
+            Files.createDirectories(uploadPath);
+        }
+        
+        // Get file extension
+        String fileExtension = getFileExtension(originalFilename);
+        
+        // Generate unique filename
+        String filename = "cover_" + userId + "_" + UUID.randomUUID().toString() + fileExtension;
+        Path targetPath = uploadPath.resolve(filename);
+        
+        // Save the file
+        Files.copy(file.getInputStream(), targetPath, StandardCopyOption.REPLACE_EXISTING);
+        
+        // Return the relative path for serving
+        return "profiles/" + filename;
+    }
+    
+    /**
+     * Check if the file is a valid image file
+     */
+    private boolean isValidImageFile(String filename) {
+        String extension = getFileExtension(filename).toLowerCase();
+        return ALLOWED_EXTENSIONS.contains(extension.substring(1)); // Remove the dot
+    }
+    
+    /**
+     * Get file extension from filename
+     */
+    private String getFileExtension(String filename) {
+        int lastDotIndex = filename.lastIndexOf('.');
+        if (lastDotIndex != -1 && lastDotIndex < filename.length() - 1) {
+            return filename.substring(lastDotIndex);
+        }
+        return ".jpg"; // Default extension
     }
 }

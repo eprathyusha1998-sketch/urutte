@@ -2,14 +2,16 @@ import React, { useState } from 'react';
 import { IonIcon } from '@ionic/react';
 import { 
   image, 
+  videocam,
   chatbubbleOutline, 
   closeOutline, 
   checkmarkOutline,
-  attachOutline,
   timeOutline
 } from 'ionicons/icons';
 import ThreadReply from './ThreadReply';
 import { Thread, User } from '../types.d';
+import { generateInitials, getInitialsBackgroundColor } from '../utils/profileUtils';
+import { getProfileImageUrl } from '../utils/mediaUtils';
 
 interface ThreadViewProps {
   mainPost: Thread;
@@ -152,11 +154,21 @@ const ThreadView: React.FC<ThreadViewProps> = ({
         {!showReplyInput && (
           <div className="bg-white dark:bg-dark2 border-t border-gray-200 dark:border-slate-700 p-4">
             <div className="flex items-center gap-3">
-              <img 
-                src={currentUser?.picture || "/assets/images/avatars/avatar-2.jpg"} 
-                alt={currentUser?.name || "User"} 
-                className="w-10 h-10 rounded-full border-2 border-gray-200 dark:border-slate-600" 
-              />
+              {currentUser?.picture ? (
+                <img 
+                  src={getProfileImageUrl(currentUser.picture)} 
+                  alt={currentUser.name || "User"} 
+                  className="w-10 h-10 rounded-full border-2 border-gray-200 dark:border-slate-600 object-cover" 
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-slate-600 flex items-center justify-center">
+                  <div className={`w-8 h-8 rounded-full ${getInitialsBackgroundColor(currentUser?.name || '')} flex items-center justify-center`}>
+                    <span className="text-white text-sm font-semibold">
+                      {generateInitials(currentUser?.name || 'U')}
+                    </span>
+                  </div>
+                </div>
+              )}
               <div className="flex-1">
                 <button
                   onClick={() => setShowReplyInput(true)}
@@ -173,11 +185,21 @@ const ThreadView: React.FC<ThreadViewProps> = ({
         {showReplyInput && (
           <div className="bg-white dark:bg-dark2 border-t border-gray-200 dark:border-slate-700 p-4">
             <div className="flex items-start gap-3">
-              <img 
-                src={currentUser?.picture || "/assets/images/avatars/avatar-2.jpg"} 
-                alt={currentUser?.name || "User"} 
-                className="w-10 h-10 rounded-full border-2 border-gray-200 dark:border-slate-600" 
-              />
+              {currentUser?.picture ? (
+                <img 
+                  src={getProfileImageUrl(currentUser.picture)} 
+                  alt={currentUser.name || "User"} 
+                  className="w-10 h-10 rounded-full border-2 border-gray-200 dark:border-slate-600 object-cover" 
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-slate-600 flex items-center justify-center">
+                  <div className={`w-8 h-8 rounded-full ${getInitialsBackgroundColor(currentUser?.name || '')} flex items-center justify-center`}>
+                    <span className="text-white text-sm font-semibold">
+                      {generateInitials(currentUser?.name || 'U')}
+                    </span>
+                  </div>
+                </div>
+              )}
               <div className="flex-1">
                 <textarea
                   value={replyContent}
@@ -192,17 +214,34 @@ const ThreadView: React.FC<ThreadViewProps> = ({
                 <div className="flex items-center gap-2">
                   <input
                     type="file"
-                    accept="image/*,video/*"
+                    accept="image/*"
                     onChange={handleMediaSelect}
                     className="hidden"
-                    id="main-reply-media-upload"
+                    id="main-reply-image-upload"
                   />
                   <label
-                    htmlFor="main-reply-media-upload"
+                    htmlFor="main-reply-image-upload"
                     className="flex items-center gap-1.5 bg-blue-50 text-blue-600 rounded-full py-0.5 px-1.5 border border-blue-200 dark:bg-blue-950 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors cursor-pointer text-xs"
                   >
                     <IonIcon 
-                      icon={selectedMedia ? checkmarkOutline : attachOutline} 
+                      icon={selectedMedia ? checkmarkOutline : image} 
+                      className="text-sm" 
+                    />
+                  </label>
+                  
+                  <input
+                    type="file"
+                    accept="video/*"
+                    onChange={handleMediaSelect}
+                    className="hidden"
+                    id="main-reply-video-upload"
+                  />
+                  <label
+                    htmlFor="main-reply-video-upload"
+                    className="flex items-center gap-1.5 bg-purple-50 text-purple-600 rounded-full py-0.5 px-1.5 border border-purple-200 dark:bg-purple-950 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900 transition-colors cursor-pointer text-xs"
+                  >
+                    <IonIcon 
+                      icon={videocam} 
                       className="text-sm" 
                     />
                   </label>

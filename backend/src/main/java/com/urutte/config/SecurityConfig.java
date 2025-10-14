@@ -1,10 +1,15 @@
 package com.urutte.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -16,6 +21,17 @@ public class SecurityConfig {
     
     @Autowired
     private OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
+    
+    @Autowired
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
+    
+    @Value("${app.frontend.url:http://localhost}")
+    private String frontendUrl;
+    
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
     
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
@@ -40,17 +56,20 @@ public class SecurityConfig {
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(csrf -> csrf.disable())
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authz -> authz
-                .requestMatchers("/", "/login**", "/oauth2/**", "/error", "/api/**", "/ws/**").permitAll()
+                .requestMatchers("/", "/login**", "/oauth2/**", "/error", "/api/auth/**", "/ws/**").permitAll()
+                .requestMatchers("/api/**").authenticated()
                 .anyRequest().permitAll()
             )
+            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
             .oauth2Login(oauth2 -> oauth2
                 .loginPage("/oauth2/authorization/google")
                 .successHandler(oAuth2LoginSuccessHandler)
-                .failureUrl("/login?error=true")
+                .failureUrl(frontendUrl + "/login?error=true")
             )
             .logout(logout -> logout
-                .logoutSuccessUrl("/login")
+                .logoutSuccessUrl(frontendUrl + "/login")
                 .invalidateHttpSession(true)
                 .clearAuthentication(true)
             );

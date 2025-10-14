@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: urutte-postgres-local
+    environment:
+      POSTGRES_DB: urutte_local
+      POSTGRES_USER: urutte_user
+      POSTGRES_PASSWORD: urutte123
+    volumes:
+      - postgres_local_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U urutte_user -d urutte_local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    image: urutte-backend-local
+    container_name: urutte-backend-local
+    environment:
+      SPRING_PROFILES_ACTIVE: default
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/urutte_local
+      SPRING_DATASOURCE_USERNAME: urutte_user
+      SPRING_DATASOURCE_PASSWORD: urutte123
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      UPLOAD_DIR: /app/uploads
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    image: urutte-frontend-local
+    container_name: urutte-frontend-local
+    environment:
+      REACT_APP_API_URL: http://localhost:8080/api
+      REACT_APP_WS_URL: ws://localhost:8080/ws
+    ports:
+      - "3000:80"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  postgres_local_data:

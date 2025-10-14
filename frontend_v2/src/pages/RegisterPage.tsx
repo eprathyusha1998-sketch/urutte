@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { IonIcon } from '@ionic/react';
-import { logoFacebook, logoTwitter, logoGoogle } from 'ionicons/icons';
+import { logoGoogle } from 'ionicons/icons';
+import { setStoredToken } from '../utils/auth';
+import { useNotification } from '../contexts/NotificationContext';
 
 const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
+  const { showSuccess, showError } = useNotification();
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -22,30 +25,68 @@ const RegisterPage: React.FC = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Validation
     if (formData.password !== formData.confirmPassword) {
-      alert('Passwords do not match!');
+      showError('Validation Error', 'Passwords do not match!');
       return;
     }
     
     if (!formData.acceptTerms) {
-      alert('Please accept the terms of use');
+      showError('Validation Error', 'Please accept the terms of use');
       return;
     }
 
-    // TODO: Implement actual registration logic
-    console.log('Register:', formData);
-    // For now, just navigate to feed page
-    navigate('/feed');
+    try {
+      if (!process.env.REACT_APP_API_URL) {
+        showError('Configuration Error', 'Application is not properly configured. Please refresh the page.');
+        return;
+      }
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          password: formData.password,
+          confirmPassword: formData.confirmPassword,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Store token and user data
+        setStoredToken(data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        
+        // Show success message
+        showSuccess('Welcome to Urutte!', `Hello ${data.user.name}! Your account has been created successfully.`);
+        
+        // Navigate to feed
+        navigate('/feed');
+      } else {
+        showError('Registration Failed', data.message || 'Registration failed. Please try again.');
+      }
+    } catch (err: any) {
+      showError('Registration Failed', 'Network error. Please check your connection and try again.');
+    }
   };
 
   const handleGoogleSignup = () => {
-    // TODO: Implement Google OAuth
-    console.log('Google signup');
-    navigate('/feed');
+    // Redirect to Spring Boot OAuth2 endpoint
+    if (!process.env.REACT_APP_API_URL) {
+      showError('Configuration Error', 'Application is not properly configured. Please refresh the page.');
+      return;
+    }
+    const redirectUrl = `${process.env.REACT_APP_API_URL}`.replace('/api', '') + '/oauth2/authorization/google';
+    console.log('Redirecting to Google OAuth:', redirectUrl);
+    window.location.href = redirectUrl;
   };
 
   return (
@@ -55,8 +96,11 @@ const RegisterPage: React.FC = () => {
         <div className="w-full lg:max-w-sm mx-auto space-y-10" uk-scrollspy="target: > *; cls: uk-animation-scale-up; delay: 100 ;repeat: true">
           
           {/* Logo */}
-          <a href="#"> <img src="/assets/images/logo.png" className="w-28 absolute top-10 left-10 dark:hidden" alt="" /></a>
-          <a href="#"> <img src="/assets/images/logo-light.png" className="w-28 absolute top-10 left-10 hidden dark:!block" alt="" /></a>
+        <div className="flex justify-center mb-8">
+          <div className="w-12 h-12 bg-black rounded-lg flex items-center justify-center">
+            <span className="text-white font-bold text-2xl">U</span>
+          </div>
+        </div>
 
           {/* Title */}
           <div>
@@ -168,7 +212,7 @@ const RegisterPage: React.FC = () => {
                     onChange={handleChange}
                     className="!rounded-md accent-red-800" 
                   />
-                  <span className="ml-2">you agree to our <a href="#" className="text-blue-700 hover:underline">terms of use </a> </span>
+                  <span className="ml-2">you agree to our <button type="button" className="text-blue-700 hover:underline">terms of use</button> </span>
                 </label>
               </div>
 
@@ -194,12 +238,6 @@ const RegisterPage: React.FC = () => {
               > 
                 <IonIcon icon={logoGoogle} className="text-lg" /> Google  
               </button>
-              <a href="#" className="button flex-1 flex items-center justify-center gap-2 bg-primary text-white text-sm"> 
-                <IonIcon icon={logoFacebook} className="text-lg" /> Facebook  
-              </a>
-              <a href="#" className="button flex-1 flex items-center justify-center gap-2 bg-sky-600 text-white text-sm"> 
-                <IonIcon icon={logoTwitter} /> Twitter  
-              </a>
             </div>
             
           </form>
@@ -215,7 +253,9 @@ const RegisterPage: React.FC = () => {
               <img src="/assets/images/post/img-3.jpg" alt="" className="w-full h-full object-cover uk-animation-kenburns uk-animation-reverse uk-transform-origin-center-left" />
               <div className="absolute bottom-0 w-full uk-tr ansition-slide-bottom-small z-10">
                 <div className="max-w-xl w-full mx-auto pb-32 px-5 z-30 relative" uk-scrollspy="target: > *; cls: uk-animation-scale-up; delay: 100 ;repeat: true"> 
-                  <img className="w-12" src="/assets/images/logo-icon.png" alt="Socialite" />
+                  <div className="w-12 h-12 bg-black rounded-lg flex items-center justify-center">
+                    <span className="text-white font-bold text-lg">U</span>
+                  </div>
                   <h4 className="!text-white text-2xl font-semibold mt-7" uk-slideshow-parallax="y: 600,0,0">  Connect With Friends </h4> 
                   <p className="!text-white text-lg mt-7 leading-8" uk-slideshow-parallax="y: 800,0,0;"> Join millions of people sharing their moments and connecting with friends around the world.</p>   
                 </div> 
@@ -226,7 +266,9 @@ const RegisterPage: React.FC = () => {
               <img src="/assets/images/post/img-2.jpg" alt="" className="w-full h-full object-cover uk-animation-kenburns uk-animation-reverse uk-transform-origin-center-left" />
               <div className="absolute bottom-0 w-full uk-tr ansition-slide-bottom-small z-10">
                 <div className="max-w-xl w-full mx-auto pb-32 px-5 z-30 relative" uk-scrollspy="target: > *; cls: uk-animation-scale-up; delay: 100 ;repeat: true"> 
-                  <img className="w-12" src="/assets/images/logo-icon.png" alt="Socialite" />
+                  <div className="w-12 h-12 bg-black rounded-lg flex items-center justify-center">
+                    <span className="text-white font-bold text-lg">U</span>
+                  </div>
                   <h4 className="!text-white text-2xl font-semibold mt-7" uk-slideshow-parallax="y: 800,0,0">  Share Your Story </h4> 
                   <p className="!text-white text-lg mt-7 leading-8" uk-slideshow-parallax="y: 800,0,0;"> Create your profile, share your experiences, and discover what's happening around you.</p>   
                 </div> 

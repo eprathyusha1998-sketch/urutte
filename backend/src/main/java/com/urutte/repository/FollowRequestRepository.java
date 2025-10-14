@@ -42,4 +42,7 @@ public interface FollowRequestRepository extends JpaRepository<FollowRequest, Lo
     // Get follow request by IDs
     @Query("SELECT fr FROM FollowRequest fr WHERE fr.requester.id = :requesterId AND fr.target.id = :targetId")
     Optional<FollowRequest> findByRequesterIdAndTargetId(@Param("requesterId") String requesterId, @Param("targetId") String targetId);
+    
+    // Get rejected follow requests by requester within a time period
+    List<FollowRequest> findByRequesterIdAndStatusAndUpdatedAtAfter(String requesterId, FollowRequest.FollowRequestStatus status, java.time.Instant updatedAt);
 }

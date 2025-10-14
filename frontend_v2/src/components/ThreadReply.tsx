@@ -3,14 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import { IonIcon } from '@ionic/react';
 import { 
   image, 
+  videocam,
   chatbubbleOutline, 
   closeOutline, 
   checkmarkOutline,
-  attachOutline,
   timeOutline
 } from 'ionicons/icons';
 import PostCard from './PostCard';
 import { Thread, User } from '../types.d';
+import { generateInitials, getInitialsBackgroundColor } from '../utils/profileUtils';
+import { getProfileImageUrl } from '../utils/mediaUtils';
 
 // Type for PostCard compatibility
 type PostCardPost = {
@@ -173,17 +175,27 @@ const ThreadReply: React.FC<ThreadReplyProps> = ({
       {showReplyInput && level < maxLevel && (
         <div className="mt-2 bg-gray-50 dark:bg-slate-800 rounded-lg p-2">
           <div className="flex items-start gap-2">
-            <img 
-              src={currentUser?.picture || "/assets/images/avatars/avatar-2.jpg"} 
-              alt={currentUser?.name || "User"} 
-              className="w-6 h-6 rounded-full" 
-            />
+            {currentUser?.picture ? (
+              <img 
+                src={getProfileImageUrl(currentUser.picture)} 
+                alt={currentUser.name || "User"} 
+                className="w-6 h-6 rounded-full object-cover" 
+              />
+            ) : (
+              <div className="w-6 h-6 rounded-full bg-gray-100 dark:bg-slate-600 flex items-center justify-center">
+                <div className={`w-5 h-5 rounded-full ${getInitialsBackgroundColor(currentUser?.name || '')} flex items-center justify-center`}>
+                  <span className="text-white text-xs font-semibold">
+                    {generateInitials(currentUser?.name || 'U')}
+                  </span>
+                </div>
+              </div>
+            )}
             <div className="flex-1">
               <textarea
                 value={replyContent}
                 onChange={(e) => setReplyContent(e.target.value)}
                 placeholder={`Reply to ${post.userName}...`}
-                className="w-full bg-transparent border-none outline-none focus:ring-0 focus:border-transparent text-gray-700 dark:text-gray-300 placeholder-gray-500 dark:placeholder-gray-400 resize-none text-xs"
+                className="w-full bg-transparent border-none outline-none focus:ring-0 focus:border-transparent text-gray-700 dark:text-gray-300 placeholder-gray-500 dark:placeholder-gray-400 resize-none text-sm"
                 rows={2}
                 maxLength={2000}
               />
@@ -192,17 +204,34 @@ const ThreadReply: React.FC<ThreadReplyProps> = ({
                 <div className="flex items-center gap-1">
                   <input
                     type="file"
-                    accept="image/*,video/*"
+                    accept="image/*"
                     onChange={handleMediaSelect}
                     className="hidden"
-                    id={`media-upload-${post.id}`}
+                    id={`image-upload-${post.id}`}
                   />
                   <label
-                    htmlFor={`media-upload-${post.id}`}
+                    htmlFor={`image-upload-${post.id}`}
                     className="flex items-center gap-1 bg-blue-50 text-blue-600 rounded-full py-0.5 px-1.5 border border-blue-200 dark:bg-blue-950 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors cursor-pointer text-xs"
                   >
                     <IonIcon 
-                      icon={selectedMedia ? checkmarkOutline : attachOutline} 
+                      icon={selectedMedia ? checkmarkOutline : image} 
+                      className="text-sm" 
+                    />
+                  </label>
+                  
+                  <input
+                    type="file"
+                    accept="video/*"
+                    onChange={handleMediaSelect}
+                    className="hidden"
+                    id={`video-upload-${post.id}`}
+                  />
+                  <label
+                    htmlFor={`video-upload-${post.id}`}
+                    className="flex items-center gap-1 bg-purple-50 text-purple-600 rounded-full py-0.5 px-1.5 border border-purple-200 dark:bg-purple-950 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900 transition-colors cursor-pointer text-xs"
+                  >
+                    <IonIcon 
+                      icon={videocam} 
                       className="text-sm" 
                     />
                   </label>

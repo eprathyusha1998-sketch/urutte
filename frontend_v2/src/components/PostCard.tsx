@@ -10,6 +10,9 @@ import {
   document
 } from 'ionicons/icons';
 import PostActions from './PostActions';
+import { getMediaUrl } from '../utils/mediaUtils';
+import { generateInitials, getInitialsBackgroundColor } from '../utils/profileUtils';
+import { getProfileImageUrl } from '../utils/mediaUtils';
 
 interface Post {
   id: number;
@@ -182,7 +185,7 @@ const PostCard: React.FC<PostCardProps> = ({
         >
           {post.userPicture ? (
             <img 
-              src={post.userPicture} 
+              src={getProfileImageUrl(post.userPicture)} 
               alt={post.userName || 'User'}
               className="w-full h-full object-cover"
               onError={(e) => {
@@ -193,12 +196,16 @@ const PostCard: React.FC<PostCardProps> = ({
               }}
             />
           ) : null}
-          <span 
-            className="text-gray-600 dark:text-gray-300 font-semibold w-full h-full flex items-center justify-center"
+          <div 
+            className="w-full h-full bg-gray-100 dark:bg-slate-600 flex items-center justify-center"
             style={{ display: post.userPicture ? 'none' : 'flex' }}
           >
-            {post.userName?.charAt(0)?.toUpperCase() || 'U'}
-          </span>
+            <div className={`w-8 h-8 rounded-full ${getInitialsBackgroundColor(post.userName || '')} flex items-center justify-center`}>
+              <span className="text-white text-sm font-semibold">
+                {generateInitials(post.userName || 'U')}
+              </span>
+            </div>
+          </div>
         </div>
 
         {/* Post Info */}
@@ -278,7 +285,7 @@ const PostCard: React.FC<PostCardProps> = ({
               <div key={media.id} className="relative">
                 {media.mediaType === 'image' ? (
                   <img 
-                    src={media.mediaUrl.startsWith('http') ? media.mediaUrl : `http://localhost:8080/${media.mediaUrl}`} 
+                    src={getMediaUrl(media.mediaUrl)} 
                     alt={media.altText || 'Post media'}
                     className={`w-full rounded-lg object-cover ${
                       post.media && post.media.length === 1 ? 'max-h-96' : 'aspect-square'
@@ -290,7 +297,7 @@ const PostCard: React.FC<PostCardProps> = ({
                   />
                 ) : media.mediaType === 'video' ? (
                   <video 
-                    src={media.mediaUrl.startsWith('http') ? media.mediaUrl : `http://localhost:8080/${media.mediaUrl}`}
+                    src={getMediaUrl(media.mediaUrl)}
                     controls
                     className={`w-full rounded-lg ${
                       post.media && post.media.length === 1 ? 'max-h-96' : 'aspect-square'
@@ -314,7 +321,7 @@ const PostCard: React.FC<PostCardProps> = ({
         <div className="mb-3 rounded-xl overflow-hidden">
           {post.mediaType === 'image' ? (
             <img 
-              src={post.mediaUrl.startsWith('http') ? post.mediaUrl : `http://localhost:8080/${post.mediaUrl}`} 
+              src={getMediaUrl(post.mediaUrl)} 
               alt="Post media"
               className="w-full max-h-96 object-cover"
               onError={(e) => {
@@ -324,7 +331,7 @@ const PostCard: React.FC<PostCardProps> = ({
             />
           ) : post.mediaType === 'video' ? (
             <video 
-              src={post.mediaUrl.startsWith('http') ? post.mediaUrl : `http://localhost:8080/${post.mediaUrl}`}
+              src={getMediaUrl(post.mediaUrl)}
               controls
               className="w-full max-h-96"
             />
@@ -359,14 +366,18 @@ const PostCard: React.FC<PostCardProps> = ({
             <div className="w-6 h-6 rounded-full bg-gray-300 dark:bg-slate-600 flex items-center justify-center overflow-hidden">
               {post.quotedPost.userPicture ? (
                 <img 
-                  src={post.quotedPost.userPicture} 
+                  src={getProfileImageUrl(post.quotedPost.userPicture)} 
                   alt={post.quotedPost.userName} 
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <span className="text-xs font-semibold text-gray-600 dark:text-gray-300">
-                  {post.quotedPost.userName?.charAt(0)?.toUpperCase() || 'U'}
-                </span>
+                <div className="w-full h-full bg-gray-100 dark:bg-slate-600 flex items-center justify-center">
+                  <div className={`w-5 h-5 rounded-full ${getInitialsBackgroundColor(post.quotedPost.userName || '')} flex items-center justify-center`}>
+                    <span className="text-white text-xs font-semibold">
+                      {generateInitials(post.quotedPost.userName || 'U')}
+                    </span>
+                  </div>
+                </div>
               )}
             </div>
             <span className="font-semibold text-sm text-gray-900 dark:text-white">

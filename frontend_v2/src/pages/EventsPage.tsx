@@ -28,6 +28,7 @@ import {
   happy
 } from 'ionicons/icons';
 import { authApi, eventsApi } from '../services/api';
+import { generateInitials, getInitialsBackgroundColor } from '../utils/profileUtils';
 
 interface User {
   id: string;
@@ -459,14 +460,21 @@ const EventsPage: React.FC = () => {
 
                   {/* Organizer */}
                   <div className="flex items-center mb-4">
-                    <img
-                      src={event.organizer.picture || "/assets/images/avatars/avatar-2.jpg"}
-                      alt={event.organizer.name}
-                      className="w-6 h-6 rounded-full mr-2"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = "/assets/images/avatars/avatar-2.jpg";
-                      }}
-                    />
+                    {event.organizer.picture ? (
+                      <img
+                        src={event.organizer.picture}
+                        alt={event.organizer.name}
+                        className="w-6 h-6 rounded-full mr-2 object-cover"
+                      />
+                    ) : (
+                      <div className="w-6 h-6 rounded-full mr-2 bg-gray-100 dark:bg-slate-600 flex items-center justify-center">
+                        <div className={`w-5 h-5 rounded-full ${getInitialsBackgroundColor(event.organizer.name || '')} flex items-center justify-center`}>
+                          <span className="text-white text-xs font-semibold">
+                            {generateInitials(event.organizer.name || 'U')}
+                          </span>
+                        </div>
+                      </div>
+                    )}
                     <span className="text-sm text-gray-600 dark:text-gray-400">
                       by {event.organizer.name}
                     </span>

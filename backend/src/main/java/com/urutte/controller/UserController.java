@@ -9,8 +9,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/users")
@@ -42,6 +44,52 @@ public class UserController {
         }
         
         return ResponseEntity.status(401).build();
+    }
+    
+    @PutMapping("/me")
+    public ResponseEntity<Map<String, Object>> updateProfile(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @AuthenticationPrincipal OidcUser principal,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String username,
+            @RequestParam(required = false) String bio,
+            @RequestParam(required = false) String location,
+            @RequestParam(required = false) String website,
+            @RequestParam(required = false) String phoneNumber,
+            @RequestParam(required = false) String dateOfBirth,
+            @RequestParam(required = false) String gender,
+            @RequestParam(required = false) Boolean isPrivate,
+            @RequestParam(required = false) MultipartFile profileImage,
+            @RequestParam(required = false) MultipartFile coverImage) {
+        
+        try {
+            User currentUser = getCurrentUserFromAuth(authHeader, principal);
+            if (currentUser == null) {
+                return ResponseEntity.status(401).build();
+            }
+            
+            UserDto updatedUser = userService.updateUserProfile(
+                currentUser.getId(),
+                name, username, bio, location, website, phoneNumber, 
+                dateOfBirth, gender, isPrivate, profileImage, coverImage
+            );
+            
+            Map<String, Object> response = Map.of(
+                "success", true,
+                "message", "Profile updated successfully",
+                "user", updatedUser
+            );
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            System.err.println("Error updating profile: " + e.getMessage());
+            e.printStackTrace();
+            Map<String, Object> response = Map.of(
+                "success", false,
+                "message", "Failed to update profile: " + e.getMessage()
+            );
+            return ResponseEntity.status(500).body(response);
+        }
     }
     
     @GetMapping("/{userId}")
@@ -203,6 +251,65 @@ public class UserController {
             System.err.println("Error getting follow requests: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(500).build();
+        }
+    }
+
+    @GetMapping("/follow-requests/pending")
+    public ResponseEntity<List<FollowRequest>> getPendingFollowRequestsEndpoint(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @AuthenticationPrincipal OidcUser principal) {
+        
+        try {
+            User currentUser = getCurrentUserFromAuth(authHeader, principal);
+            if (currentUser == null) {
+                return ResponseEntity.status(401).build();
+            }
+            
+            List<FollowRequest> followRequests = userService.getPendingFollowRequests(currentUser.getId());
+            return ResponseEntity.ok(followRequests);
+        } catch (Exception e) {
+            System.err.println("Error getting pending follow requests: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500).build();
+        }
+    }
+
+    @PostMapping("/{userId}/follow-request")
+    public ResponseEntity<Map<String, Object>> sendFollowRequest(
+            @PathVariable String userId,
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @AuthenticationPrincipal OidcUser principal) {
+        
+        try {
+            User currentUser = getCurrentUserFromAuth(authHeader, principal);
+            if (currentUser == null) {
+                return ResponseEntity.status(401).build();
+            }
+            
+            if (userId.equals(currentUser.getId())) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "Cannot send follow request to yourself"
+                ));
+            }
+            
+            FollowRequest followRequest = userService.sendFollowRequest(currentUser.getId(), userId);
+            
+            Map<String, Object> response = Map.of(
+                "success", true,
+                "message", "Follow request sent successfully",
+                "followRequest", followRequest
+            );
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            System.err.println("Error sending follow request: " + e.getMessage());
+            e.printStackTrace();
+            Map<String, Object> response = Map.of(
+                "success", false,
+                "message", "Failed to send follow request: " + e.getMessage()
+            );
+            return ResponseEntity.status(500).body(response);
         }
     }
     

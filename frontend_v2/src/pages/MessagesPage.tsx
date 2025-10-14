@@ -1,34 +1,18 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IonIcon } from '@ionic/react';
 import Sidebar from '../components/Sidebar';
 import {
-  menuOutline,
-  closeOutline,
   search,
   addOutline,
-  notificationsOutline,
-  personOutline,
-  homeOutline,
   chatbubbleOutline,
   videocamOutline,
-  calendarOutline,
-  documentTextOutline,
-  peopleOutline,
-  storefrontOutline,
-  libraryOutline,
-  gameControllerOutline,
   settingsOutline,
   checkmarkOutline,
-  volumeMuteOutline,
   chevronBackOutline,
   callOutline,
   informationCircleOutline,
   heartOutline,
-  image,
-  imagesOutline,
-  documentText,
-  giftOutline,
   happyOutline,
   sendOutline,
   close,
@@ -37,8 +21,9 @@ import {
   stopCircleOutline,
   trashOutline
 } from 'ionicons/icons';
-import { authApi, usersApi } from '../services/api';
+import { authApi, usersApi, threadsApi } from '../services/api';
 import { simpleChatService, Message, User } from '../services/simpleChat';
+import NewThreadModal from '../components/NewThreadModal';
 
 
 interface Conversation {
@@ -58,6 +43,7 @@ const MessagesPage: React.FC = () => {
   const [followers, setFollowers] = useState<User[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [showFollowers, setShowFollowers] = useState(false);
+  const [showNewThreadModal, setShowNewThreadModal] = useState(false);
   const [searchResults, setSearchResults] = useState<User[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -74,14 +60,6 @@ const MessagesPage: React.FC = () => {
 
     initializeUser();
   }, []);
-
-  useEffect(() => {
-    if (currentUser) {
-      loadConversations();
-      loadFollowers();
-      connectToChatStream();
-    }
-  }, [currentUser]);
 
   useEffect(() => {
     if (selectedConversation) {
@@ -102,7 +80,7 @@ const MessagesPage: React.FC = () => {
     };
   }, []);
 
-  const loadConversations = async () => {
+  const loadConversations = useCallback(async () => {
     if (!currentUser) return;
     
     try {
@@ -129,9 +107,9 @@ const MessagesPage: React.FC = () => {
     } catch (error) {
       console.error('Error loading conversations:', error);
     }
-  };
+  }, [currentUser]);
 
-  const loadFollowers = async () => {
+  const loadFollowers = useCallback(async () => {
     if (!currentUser) return;
     
     try {
@@ -140,7 +118,7 @@ const MessagesPage: React.FC = () => {
     } catch (error) {
       console.error('Error loading followers:', error);
     }
-  };
+  }, [currentUser]);
 
   const loadMessages = async (userId: string) => {
     try {
@@ -151,17 +129,7 @@ const MessagesPage: React.FC = () => {
     }
   };
 
-  const connectToChatStream = () => {
-    if (!currentUser) return;
-
-    console.log('Connecting to chat stream...');
-    simpleChatService.connectToStream((message) => {
-      console.log('New message received via SSE:', message);
-      handleNewMessage(message);
-    });
-  };
-
-  const handleNewMessage = (message: any) => {
+  const handleNewMessage = useCallback((message: any) => {
     setMessages(prev => [...prev, message]);
 
     setConversations(prev => prev.map(conv => {
@@ -174,7 +142,25 @@ const MessagesPage: React.FC = () => {
       }
       return conv;
     }));
-  };
+  }, [currentUser]);
+
+  const connectToChatStream = useCallback(() => {
+    if (!currentUser) return;
+
+    console.log('Connecting to chat stream...');
+    simpleChatService.connectToStream((message) => {
+      console.log('New message received via SSE:', message);
+      handleNewMessage(message);
+    });
+  }, [currentUser, handleNewMessage]);
+
+  useEffect(() => {
+    if (currentUser) {
+      loadConversations();
+      loadFollowers();
+      connectToChatStream();
+    }
+  }, [currentUser, loadConversations, loadFollowers, connectToChatStream]);
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedConversation || !currentUser) return;
@@ -243,6 +229,20 @@ const MessagesPage: React.FC = () => {
   const handleLogout = () => {
     localStorage.removeItem('token');
     navigate('/login');
+  };
+
+  const handleCreateNewThread = async (content: string, mediaFiles?: File[], replyPermission?: 'ANYONE' | 'FOLLOWERS' | 'FOLLOWING' | 'MENTIONED_ONLY') => {
+    try {
+      const response = await threadsApi.createThread(content, mediaFiles, undefined, replyPermission);
+      
+      if (response.success) {
+        setShowNewThreadModal(false);
+        // Navigate to feed to see the new thread
+        navigate('/feed');
+      }
+    } catch (error) {
+      console.error('Error creating new thread:', error);
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -338,7 +338,7 @@ const MessagesPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-slate-900">
+    <div id="wrapper" className="bg-gray-100 dark:bg-slate-900">
 
       {/* Sidebar */}
       <Sidebar 
@@ -348,10 +348,12 @@ const MessagesPage: React.FC = () => {
         }}
         isDarkMode={document.documentElement.classList.contains('dark')}
         onLogout={handleLogout}
+        onCreateThread={() => setShowNewThreadModal(true)}
+        isCreateModalOpen={showNewThreadModal}
       />
 
       {/* Main Content */}
-      <main id="site__main" className="2xl:ml-[--w-side] xl:ml-[--w-side-sm] p-2.5 h-[calc(100vh-var(--m-top))] mt-[--m-top]">
+      <main id="site__main" className="p-2.5 h-[calc(100vh-var(--m-top))] mt-[--m-top] bg-white">
         <div className="relative overflow-hidden border -m-2.5 dark:border-slate-700 rounded-lg">
           <div className="flex bg-white dark:bg-slate-800 h-full">
             
@@ -397,9 +399,8 @@ const MessagesPage: React.FC = () => {
                   {showFollowers ? (
                     // Show filtered followers when searching
                     filteredFollowers.map((follower) => (
-                      <a
+                      <button
                         key={follower.id}
-                        href="#"
                         onClick={(e) => {
                           e.preventDefault();
                           startConversation(follower);
@@ -427,14 +428,13 @@ const MessagesPage: React.FC = () => {
                             Click to start conversation
                           </div>
                         </div>
-                      </a>
+                      </button>
                     ))
                   ) : (
                     // Show existing conversations
                     conversations.map((conversation) => (
-                      <a
+                      <button
                         key={conversation.user.id}
-                        href="#"
                         onClick={(e) => {
                           e.preventDefault();
                           selectConversation(conversation);
@@ -467,7 +467,7 @@ const MessagesPage: React.FC = () => {
                             {conversation.lastMessage.content}
                           </div>
                         </div>
-                      </a>
+                      </button>
                     ))
                   )}
                 </div>
@@ -545,12 +545,11 @@ const MessagesPage: React.FC = () => {
                           </div>
                         </div>
                         <div className="mt-3.5">
-                          <a
-                            href="#"
+                          <button
                             className="inline-block rounded-lg px-4 py-1.5 text-sm font-semibold bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-white"
                           >
                             View profile
-                          </a>
+                          </button>
                         </div>
                       </div>
                     ) : (
@@ -678,12 +677,11 @@ const MessagesPage: React.FC = () => {
                     </div>
                   </div>
                   <div className="mt-5">
-                    <a
-                      href="#"
+                    <button
                       className="inline-block rounded-full px-4 py-1.5 text-sm font-semibold bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-white"
                     >
                       View profile
-                    </a>
+                    </button>
                   </div>
                 </div>
                 
@@ -746,6 +744,14 @@ const MessagesPage: React.FC = () => {
           </div>
         </div>
       </main>
+
+      {/* New Thread Modal */}
+      <NewThreadModal
+        isOpen={showNewThreadModal}
+        onClose={() => setShowNewThreadModal(false)}
+        currentUser={currentUser}
+        onSubmit={handleCreateNewThread}
+      />
     </div>
   );
 };

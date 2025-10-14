@@ -2,14 +2,15 @@ import React, { useState, useEffect, useRef } from 'react';
 import { IonIcon } from '@ionic/react';
 import { 
   close,
-  documentText,
-  ellipsisHorizontal,
   image,
   happy,
   location,
-  add
+  videocam
 } from 'ionicons/icons';
 import { hashtagApi } from '../services/api';
+import { useNotification } from '../contexts/NotificationContext';
+import { generateInitials, getInitialsBackgroundColor } from '../utils/profileUtils';
+import { getProfileImageUrl } from '../utils/mediaUtils';
 
 interface NewThreadModalProps {
   isOpen: boolean;
@@ -29,6 +30,7 @@ const NewThreadModal: React.FC<NewThreadModalProps> = ({
   currentUser,
   onSubmit
 }) => {
+  const { showSuccess, showError } = useNotification();
   const [content, setContent] = useState('');
   const [selectedMedia, setSelectedMedia] = useState<File[]>([]);
   const [mediaPreviews, setMediaPreviews] = useState<string[]>([]);
@@ -38,24 +40,117 @@ const NewThreadModal: React.FC<NewThreadModalProps> = ({
   const [topicSuggestions, setTopicSuggestions] = useState<string[]>([]);
   const [replyPermission, setReplyPermission] = useState<'ANYONE' | 'FOLLOWERS' | 'FOLLOWING' | 'MENTIONED_ONLY'>('ANYONE');
   const [showReplyPermissionDropdown, setShowReplyPermissionDropdown] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Handle click outside to close dropdown
+  // Handle emoji selection
+  const handleEmojiSelect = (emoji: string) => {
+    setContent(prev => prev + emoji);
+    setShowEmojiPicker(false);
+  };
+
+  // Common emojis for the picker
+  const commonEmojis = [
+    '😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣',
+    '😊', '😇', '🙂', '🙃', '😉', '😌', '😍', '🥰',
+    '😘', '😗', '😙', '😚', '😋', '😛', '😝', '😜',
+    '🤪', '🤨', '🧐', '🤓', '😎', '🤩', '🥳', '😏',
+    '😒', '😞', '😔', '😟', '😕', '🙁', '☹️', '😣',
+    '😖', '😫', '😩', '🥺', '😢', '😭', '😤', '😠',
+    '😡', '🤬', '🤯', '😳', '🥵', '🥶', '😱', '😨',
+    '😰', '😥', '😓', '🤗', '🤔', '🤭', '🤫', '🤥',
+    '😶', '😐', '😑', '😬', '🙄', '😯', '😦', '😧',
+    '😮', '😲', '🥱', '😴', '🤤', '😪', '😵', '🤐',
+    '🥴', '🤢', '🤮', '🤧', '😷', '🤒', '🤕', '🤑',
+    '🤠', '😈', '👿', '👹', '👺', '🤡', '💩', '👻',
+    '💀', '☠️', '👽', '👾', '🤖', '🎃', '😺', '😸',
+    '😹', '😻', '😼', '😽', '🙀', '😿', '😾', '👶',
+    '👧', '🧒', '👦', '👩', '🧑', '👨', '👱', '👱‍♀️',
+    '👱‍♂️', '🧔', '👵', '🧓', '👴', '👲', '👳', '👳‍♀️',
+    '👳‍♂️', '🧕', '👮', '👮‍♀️', '👮‍♂️', '👷', '👷‍♀️', '👷‍♂️',
+    '💂', '💂‍♀️', '💂‍♂️', '🕵️', '🕵️‍♀️', '🕵️‍♂️', '👩‍⚕️', '👨‍⚕️',
+    '👩‍🌾', '👨‍🌾', '👩‍🍳', '👨‍🍳', '👩‍🎓', '👨‍🎓', '👩‍🎤', '👨‍🎤',
+    '👩‍🏫', '👨‍🏫', '👩‍🏭', '👨‍🏭', '👩‍💻', '👨‍💻', '👩‍💼', '👨‍💼',
+    '👩‍🔧', '👨‍🔧', '👩‍🔬', '👨‍🔬', '👩‍🎨', '👨‍🎨', '👩‍🚒', '👨‍🚒',
+    '👩‍✈️', '👨‍✈️', '👩‍🚀', '👨‍🚀', '👩‍⚖️', '👨‍⚖️', '👰', '🤵',
+    '👸', '🤴', '🦸', '🦸‍♀️', '🦸‍♂️', '🦹', '🦹‍♀️', '🦹‍♂️',
+    '🤶', '🎅', '🧙', '🧙‍♀️', '🧙‍♂️', '🧝', '🧝‍♀️', '🧝‍♂️',
+    '🧛', '🧛‍♀️', '🧛‍♂️', '🧟', '🧟‍♀️', '🧟‍♂️', '🧞', '🧞‍♀️',
+    '🧞‍♂️', '🧜', '🧜‍♀️', '🧜‍♂️', '🧚', '🧚‍♀️', '🧚‍♂️', '👼',
+    '🤰', '🤱', '🙇', '🙇‍♀️', '🙇‍♂️', '💁', '💁‍♀️', '💁‍♂️',
+    '🙅', '🙅‍♀️', '🙅‍♂️', '🙆', '🙆‍♀️', '🙆‍♂️', '🙋', '🙋‍♀️',
+    '🙋‍♂️', '🧏', '🧏‍♀️', '🧏‍♂️', '🤦', '🤦‍♀️', '🤦‍♂️', '🤷',
+    '🤷‍♀️', '🤷‍♂️', '🙎', '🙎‍♀️', '🙎‍♂️', '🙍', '🙍‍♀️', '🙍‍♂️',
+    '💇', '💇‍♀️', '💇‍♂️', '💆', '💆‍♀️', '💆‍♂️', '🧖', '🧖‍♀️',
+    '🧖‍♂️', '💅', '🤳', '💃', '🕺', '👯', '👯‍♀️', '👯‍♂️',
+    '🕴', '👩‍🦽', '👨‍🦽', '👩‍🦼', '👨‍🦼', '🚶', '🚶‍♀️', '🚶‍♂️',
+    '👩‍🦯', '👨‍🦯', '🧎', '🧎‍♀️', '🧎‍♂️', '🏃', '🏃‍♀️', '🏃‍♂️',
+    '🧍', '🧍‍♀️', '🧍‍♂️', '👫', '👬', '👭', '💑', '👩‍❤️‍👩',
+    '👨‍❤️‍👨', '💏', '👩‍❤️‍💋‍👩', '👨‍❤️‍💋‍👨', '👪', '👨‍👩‍👧', '👨‍👩‍👧‍👦', '👨‍👩‍👦‍👦',
+    '👨‍👩‍👧‍👧', '👨‍👨‍👦', '👨‍👨‍👧', '👨‍👨‍👧‍👦', '👨‍👨‍👦‍👦', '👨‍👨‍👧‍👧', '👩‍👩‍👦', '👩‍👩‍👧',
+    '👩‍👩‍👧‍👦', '👩‍👩‍👦‍👦', '👩‍👩‍👧‍👧', '👨‍👦', '👨‍👦‍👦', '👨‍👧', '👨‍👧‍👦', '👨‍👧‍👧',
+    '👩‍👦', '👩‍👦‍👦', '👩‍👧', '👩‍👧‍👦', '👩‍👧‍👧', '🗣', '👤', '👥',
+    '👋', '🤚', '🖐', '✋', '🖖', '👌', '🤏', '✌️',
+    '🤞', '🤟', '🤘', '🤙', '👈', '👉', '👆', '🖕',
+    '👇', '☝️', '👍', '👎', '👊', '✊', '🤛', '🤜',
+    '👏', '🙌', '👐', '🤲', '🤝', '🙏', '✍️', '💅',
+    '🤳', '💪', '🦾', '🦿', '🦵', '🦶', '👂', '🦻',
+    '👃', '🧠', '🦷', '🦴', '👀', '👁', '👅', '👄',
+    '💋', '🩸', '❤️', '🧡', '💛', '💚', '💙', '💜',
+    '🖤', '🤍', '🤎', '💔', '❣️', '💕', '💞', '💓',
+    '💗', '💖', '💘', '💝', '💟', '☮️', '✝️', '☪️',
+    '🕉', '☸️', '✡️', '🔯', '🕎', '☯️', '☦️', '🛐',
+    '⛎', '♈', '♉', '♊', '♋', '♌', '♍', '♎',
+    '♏', '♐', '♑', '♒', '♓', '🆔', '⚛️', '🉑',
+    '☢️', '☣️', '📴', '📳', '🈶', '🈚', '🈸', '🈺',
+    '🈷️', '✴️', '🆚', '💮', '🉐', '㊙️', '㊗️', '🈴',
+    '🈵', '🈹', '🈲', '🅰️', '🅱️', '🆎', '🆑', '🅾️',
+    '🆘', '❌', '⭕', '🛑', '⛔', '📛', '🚫', '💯',
+    '💢', '♨️', '🚷', '🚯', '🚳', '🚱', '🔞', '📵',
+    '🚭', '❗', '❕', '❓', '❔', '‼️', '⁉️', '🔅',
+    '🔆', '〽️', '⚠️', '🚸', '🔱', '⚜️', '🔰', '♻️',
+    '✅', '🈯', '💹', '❇️', '✳️', '❎', '🌐', '💠',
+    'Ⓜ️', '🌀', '💤', '🏧', '🚾', '♿', '🅿️', '🈳',
+    '🈂️', '🛂', '🛃', '🛄', '🛅', '🚹', '🚺', '🚼',
+    '🚻', '🚮', '🎦', '📶', '🈁', '🔣', 'ℹ️', '🔤',
+    '🔡', '🔠', '🆖', '🆗', '🆙', '🆒', '🆕', '🆓',
+    '0️⃣', '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣',
+    '8️⃣', '9️⃣', '🔟', '🔢', '#️⃣', '*️⃣', '⏏️', '▶️',
+    '⏸', '⏯', '⏹', '⏺', '⏭', '⏮', '⏩', '⏪',
+    '⏫', '⏬', '◀️', '🔼', '🔽', '➡️', '⬅️', '⬆️',
+    '⬇️', '↗️', '↘️', '↙️', '↖️', '↕️', '↔️', '↩️',
+    '↪️', '⤴️', '⤵️', '🔃', '🔄', '🔙', '🔚', '🔛',
+    '🔜', '🔝', '🛐', '⚛️', '🕉', '✡️', '☸️', '☯️',
+    '✝️', '☦️', '☪️', '☮️', '🕎', '🔯', '♈', '♉',
+    '♊', '♋', '♌', '♍', '♎', '♏', '♐', '♑',
+    '♒', '♓', '⛎', '🔀', '🔁', '🔂', '▶️', '⏩',
+    '⏭', '⏯', '⏸', '⏹', '⏺', '⏮', '⏪', '🔽',
+    '🔼', '⏫', '⏬', '➡️', '⬅️', '⬆️', '⬇️', '↗️',
+    '↘️', '↙️', '↖️', '↕️', '↔️', '↩️', '↪️', '⤴️',
+    '⤵️', '🔃', '🔄', '🔙', '🔚', '🔛', '🔜', '🔝'
+  ];
+
+  // Handle click outside to close dropdowns
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setShowReplyPermissionDropdown(false);
       }
+      // Close emoji picker if clicking outside
+      const emojiPicker = document.querySelector('.emoji-picker');
+      if (emojiPicker && !emojiPicker.contains(event.target as Node)) {
+        setShowEmojiPicker(false);
+      }
     };
 
-    if (showReplyPermissionDropdown) {
+    if (showReplyPermissionDropdown || showEmojiPicker) {
       document.addEventListener('mousedown', handleClickOutside);
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [showReplyPermissionDropdown]);
+  }, [showReplyPermissionDropdown, showEmojiPicker]);
 
   const handleMediaSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -141,9 +236,11 @@ const NewThreadModal: React.FC<NewThreadModalProps> = ({
       setMediaPreviews([]);
       setShowTopicSuggestions(false);
       setTopicSuggestions([]);
+      showSuccess('Thread Created!', 'Your thread has been posted successfully.');
       onClose();
     } catch (error) {
       console.error('Error creating thread:', error);
+      showError('Thread Creation Failed', 'Failed to create thread. Please try again.');
     } finally {
       setIsPosting(false);
     }
@@ -220,10 +317,10 @@ const NewThreadModal: React.FC<NewThreadModalProps> = ({
         <div className="p-4 relative">
           {/* User Info and Thread Input */}
           <div className="flex gap-3">
-            <div className="w-10 h-10 rounded-full bg-gray-300 dark:bg-slate-600 flex items-center justify-center overflow-hidden flex-shrink-0">
+            <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
               {currentUser?.picture ? (
                 <img 
-                  src={currentUser.picture} 
+                  src={getProfileImageUrl(currentUser.picture)} 
                   alt={currentUser.name}
                   className="w-full h-full object-cover"
                   onError={(e) => {
@@ -234,12 +331,14 @@ const NewThreadModal: React.FC<NewThreadModalProps> = ({
                   }}
                 />
               ) : null}
-              <span 
-                className="text-gray-600 dark:text-gray-300 font-semibold w-full h-full flex items-center justify-center"
+              <div 
+                className={`w-full h-full ${getInitialsBackgroundColor(currentUser?.name || '')} flex items-center justify-center`}
                 style={{ display: currentUser?.picture ? 'none' : 'flex' }}
               >
-                {currentUser?.name?.charAt(0)?.toUpperCase() || 'U'}
-              </span>
+                <span className="text-white text-sm font-semibold">
+                  {generateInitials(currentUser?.name || '')}
+                </span>
+              </div>
             </div>
             
             <div className="flex-1 relative">
@@ -337,7 +436,15 @@ const NewThreadModal: React.FC<NewThreadModalProps> = ({
               <IonIcon icon={image} className="text-2xl text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400 transition-colors" />
             </label>
             
-            <button className="hover:bg-gray-100 dark:hover:bg-slate-700 p-1 rounded transition-colors">
+            <input type="file" accept="image/gif" onChange={handleMediaSelect} className="hidden" id="gif-upload" />
+            <label htmlFor="gif-upload" className="cursor-pointer">
+              <IonIcon icon={videocam} className="text-2xl text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400 transition-colors" />
+            </label>
+            
+            <button 
+              onClick={() => setShowEmojiPicker(!showEmojiPicker)} 
+              className="hover:bg-gray-100 dark:hover:bg-slate-700 p-1 rounded transition-colors relative"
+            >
               <IonIcon icon={happy} className="text-2xl text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400 transition-colors" />
             </button>
             
@@ -353,6 +460,24 @@ const NewThreadModal: React.FC<NewThreadModalProps> = ({
               <IonIcon icon={location} className="text-2xl text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400 transition-colors" />
             </button>
           </div>
+          
+          {/* Emoji Picker */}
+          {showEmojiPicker && (
+            <div className="emoji-picker absolute top-12 left-0 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg shadow-xl p-4 z-50 max-h-80 overflow-y-auto min-w-[280px] max-w-[320px]">
+              <div className="grid grid-cols-8 gap-2">
+                {commonEmojis.map((emoji, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleEmojiSelect(emoji)}
+                    className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-slate-700 rounded-md transition-colors text-lg hover:scale-110"
+                    title={emoji}
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Footer */}

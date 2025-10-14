@@ -2,6 +2,7 @@ package com.urutte.config;
 
 import com.urutte.model.User;
 import com.urutte.repository.UserRepository;
+import com.urutte.util.JwtUtil;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -20,6 +21,9 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
 
     @Autowired
     private UserRepository userRepository;
+    
+    @Autowired
+    private JwtUtil jwtUtil;
 
     @Value("${app.frontend.url:http://localhost}")
     private String frontendUrl;
@@ -95,9 +99,8 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
             System.out.println("Updated user: " + user.getEmail());
         }
         
-        // For simplicity, we'll use the user's email as a "token" for now
-        // In production, generate a proper JWT token here
-        String token = generateSimpleToken(user);
+        // Generate JWT token
+        String token = jwtUtil.generateToken(user.getId(), user.getEmail());
         
         // Redirect to frontend with token
         String redirectUrl = frontendUrl + "/login?token=" + token;
@@ -106,10 +109,5 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
         getRedirectStrategy().sendRedirect(request, response, redirectUrl);
     }
     
-    private String generateSimpleToken(User user) {
-        // For now, use a simple token (base64 encoded user ID)
-        // TODO: Implement proper JWT token generation
-        return java.util.Base64.getEncoder().encodeToString(user.getId().toString().getBytes());
-    }
 }
 

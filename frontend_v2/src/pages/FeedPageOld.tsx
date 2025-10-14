@@ -549,9 +549,10 @@ const FeedPage: React.FC = () => {
         <div className="flex items-center justify-between w-full max-w-2xl mx-auto px-4">
           {/* Logo */}
           <div id="logo">
-            <a href="/feed">
-              <img src="/assets/images/logo.png" alt="" className="w-24 dark:!hidden" />
-              <img src="/assets/images/logo-light.png" alt="" className="hidden dark:block" />
+            <a href="/feed" className="flex items-center">
+              <div className="w-24 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-lg">Urutte</span>
+              </div>
             </a>
           </div>
           

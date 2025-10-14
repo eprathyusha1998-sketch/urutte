@@ -8,9 +8,11 @@ import {
   search,
   add,
   heart,
-  menu,
-  logOut
+  logOut,
+  settings
 } from 'ionicons/icons';
+import { generateInitials, getInitialsBackgroundColor } from '../utils/profileUtils';
+import { getProfileImageUrl } from '../utils/mediaUtils';
 
 interface SidebarProps {
   currentUser?: {
@@ -23,9 +25,10 @@ interface SidebarProps {
   isDarkMode?: boolean;
   onLogout?: () => void;
   onCreateThread?: () => void;
+  isCreateModalOpen?: boolean;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ currentUser, onToggleTheme, isDarkMode = false, onLogout, onCreateThread }) => {
+const Sidebar: React.FC<SidebarProps> = ({ currentUser, onToggleTheme, isDarkMode = false, onLogout, onCreateThread, isCreateModalOpen = false }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
@@ -61,14 +64,14 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser, onToggleTheme, isDarkMod
   }, []);
 
   return (
-    <div className="fixed top-0 left-0 z-[99] pt-[--m-top] overflow-hidden transition-transform xl:duration-500 max-xl:w-full max-xl:-translate-x-full">
-      <div className="p-4 max-xl:bg-white shadow-sm w-20 h-[calc(100vh-64px)] relative z-30 max-lg:border-r dark:max-xl:bg-slate-700 dark:border-slate-700 flex flex-col items-center">
+    <div className="fixed top-0 left-0 z-[99] pt-[--m-top] transition-transform xl:duration-500 max-xl:w-full max-xl:-translate-x-full">
+      <div className="p-4 max-xl:bg-transparent shadow-sm w-20 h-[calc(100vh-64px)] relative z-30 max-lg:border-r dark:max-xl:bg-transparent dark:border-slate-700 flex flex-col items-center bg-transparent">
         <nav className="flex flex-col items-center space-y-6 w-full">
-          {/* Logo/Brand - Distinctive Tamil 'உ' icon */}
-          <div className="mt-4 mb-8">
-            <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center cursor-pointer"
+          {/* Logo/Brand */}
+          <div className="mb-8">
+            <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center cursor-pointer"
                  onClick={() => navigate('/feed')}>
-              <span className="text-white font-bold text-lg">உ</span>
+              <span className="text-white font-bold text-lg">U</span>
             </div>
           </div>
 
@@ -78,7 +81,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser, onToggleTheme, isDarkMod
             <button
               onClick={() => handleNavigation('/feed')}
               className={`w-12 h-12 flex items-center justify-center rounded-full transition-colors ${
-                location.pathname === '/feed' 
+                location.pathname === '/feed' && !isCreateModalOpen
                   ? 'bg-gray-100 dark:bg-slate-600' 
                   : 'hover:bg-gray-50 dark:hover:bg-slate-700'
               }`}
@@ -86,7 +89,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser, onToggleTheme, isDarkMod
               <IonIcon 
                 icon={home} 
                 className={`text-2xl ${
-                  location.pathname === '/feed' 
+                  location.pathname === '/feed' && !isCreateModalOpen
                     ? 'text-black dark:text-white' 
                     : 'text-gray-400 dark:text-gray-500'
                 }`} 
@@ -97,7 +100,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser, onToggleTheme, isDarkMod
             <button
               onClick={() => handleNavigation('/search')}
               className={`w-12 h-12 flex items-center justify-center rounded-full transition-colors ${
-                location.pathname === '/search' 
+                location.pathname === '/search' && !isCreateModalOpen
                   ? 'bg-gray-100 dark:bg-slate-600' 
                   : 'hover:bg-gray-50 dark:hover:bg-slate-700'
               }`}
@@ -105,7 +108,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser, onToggleTheme, isDarkMod
               <IonIcon 
                 icon={search} 
                 className={`text-2xl ${
-                  location.pathname === '/search' 
+                  location.pathname === '/search' && !isCreateModalOpen
                     ? 'text-black dark:text-white' 
                     : 'text-gray-400 dark:text-gray-500'
                 }`} 
@@ -120,11 +123,11 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser, onToggleTheme, isDarkMod
               <IonIcon icon={add} className="text-2xl text-gray-900 dark:text-white" />
             </button>
 
-            {/* Likes/Notifications */}
+            {/* Likes */}
             <button
-              onClick={() => handleNavigation('/notifications')}
+              onClick={() => handleNavigation('/likes')}
               className={`w-12 h-12 flex items-center justify-center rounded-full transition-colors ${
-                location.pathname === '/notifications' 
+                location.pathname === '/likes' && !isCreateModalOpen
                   ? 'bg-gray-100 dark:bg-slate-600' 
                   : 'hover:bg-gray-50 dark:hover:bg-slate-700'
               }`}
@@ -132,7 +135,26 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser, onToggleTheme, isDarkMod
               <IonIcon 
                 icon={heart} 
                 className={`text-2xl ${
-                  location.pathname === '/notifications' 
+                  location.pathname === '/likes' && !isCreateModalOpen
+                    ? 'text-black dark:text-white' 
+                    : 'text-gray-400 dark:text-gray-500'
+                }`} 
+              />
+            </button>
+
+            {/* Notifications */}
+            <button
+              onClick={() => handleNavigation('/notifications')}
+              className={`w-12 h-12 flex items-center justify-center rounded-full transition-colors ${
+                location.pathname === '/notifications' && !isCreateModalOpen
+                  ? 'bg-gray-100 dark:bg-slate-600' 
+                  : 'hover:bg-gray-50 dark:hover:bg-slate-700'
+              }`}
+            >
+              <IonIcon 
+                icon={notifications} 
+                className={`text-2xl ${
+                  location.pathname === '/notifications' && !isCreateModalOpen
                     ? 'text-black dark:text-white' 
                     : 'text-gray-400 dark:text-gray-500'
                 }`} 
@@ -149,55 +171,68 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser, onToggleTheme, isDarkMod
                     : 'hover:bg-gray-50 dark:hover:bg-slate-700'
                 }`}
               >
-                {currentUser?.picture ? (
-                  <img 
-                    src={currentUser.picture} 
-                    alt={currentUser.name}
-                    className="w-8 h-8 rounded-full object-cover"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.style.display = 'none';
-                      const fallback = target.nextElementSibling as HTMLElement;
-                      if (fallback) fallback.style.display = 'flex';
-                    }}
-                  />
-                ) : null}
-                <div 
-                  className={`w-8 h-8 rounded-full bg-gray-900 dark:bg-white flex items-center justify-center ${
-                    currentUser?.picture ? 'hidden' : 'flex'
-                  }`}
-                >
-                  <IonIcon 
-                    icon={person} 
-                    className={`text-lg ${
-                      location.pathname === '/profile' 
-                        ? 'text-white dark:text-gray-900' 
-                        : 'text-white dark:text-gray-900'
-                    }`} 
-                  />
-                </div>
+                <IonIcon 
+                  icon={person} 
+                  className={`text-2xl ${
+                    location.pathname === '/profile' 
+                      ? 'text-black dark:text-white' 
+                      : 'text-gray-400 dark:text-gray-500'
+                  }`} 
+                />
               </button>
 
               {/* Profile Dropdown */}
               {showProfileDropdown && (
-                <div className="absolute left-16 top-0 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-gray-200 dark:border-slate-700 py-2 min-w-[160px] z-50">
+                <div className="absolute left-16 top-0 bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-gray-200 dark:border-slate-700 py-3 min-w-[180px] max-w-[250px] z-[9999]">
+                  <div className="px-3 py-2 border-b border-gray-100 dark:border-slate-700">
+                    <div className="flex items-center gap-3">
+                      {currentUser?.picture ? (
+                        <img 
+                          src={getProfileImageUrl(currentUser.picture)} 
+                          alt={currentUser.name}
+                          className="w-8 h-8 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className={`w-8 h-8 rounded-full ${getInitialsBackgroundColor(currentUser?.name || '')} flex items-center justify-center`}>
+                          <span className="text-white text-sm font-semibold">
+                            {generateInitials(currentUser?.name || 'U')}
+                          </span>
+                        </div>
+                      )}
+                      <div>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">{currentUser?.name}</p>
+                      </div>
+                    </div>
+                  </div>
                   <button
                     onClick={() => {
                       handleNavigation('/profile');
                       setShowProfileDropdown(false);
                     }}
-                    className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 flex items-center gap-2"
+                    className="w-full px-4 py-3 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 flex items-center gap-3 transition-colors"
                   >
                     <IonIcon icon={person} className="text-lg" />
-                    Profile
+                    View Profile
                   </button>
                   <button
-                    onClick={handleLogout}
-                    className="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-gray-50 dark:hover:bg-slate-700 flex items-center gap-2"
+                    onClick={() => {
+                      handleNavigation('/settings');
+                      setShowProfileDropdown(false);
+                    }}
+                    className="w-full px-4 py-3 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 flex items-center gap-3 transition-colors"
                   >
-                    <IonIcon icon={logOut} className="text-lg" />
-                    Logout
+                    <IonIcon icon={settings} className="text-lg" />
+                    Settings
                   </button>
+                  <div className="border-t border-gray-100 dark:border-slate-700 mt-1">
+                    <button
+                      onClick={handleLogout}
+                      className="w-full px-4 py-3 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-3 transition-colors"
+                    >
+                      <IonIcon icon={logOut} className="text-lg" />
+                      Logout
+                    </button>
+                  </div>
                 </div>
               )}
             </div>

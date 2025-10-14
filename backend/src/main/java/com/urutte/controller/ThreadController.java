@@ -348,6 +348,26 @@ public class ThreadController {
         }
     }
     
+    // Get liked threads by current user
+    @GetMapping("/liked")
+    public ResponseEntity<List<ThreadDto>> getLikedThreads(
+            @RequestParam(value = "limit", defaultValue = "10") int limit,
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @AuthenticationPrincipal OidcUser principal) {
+        
+        User user = getCurrentUser(authHeader, principal);
+        if (user == null) {
+            return ResponseEntity.status(401).build();
+        }
+        
+        try {
+            List<ThreadDto> likedThreads = threadService.getLikedThreadsByUser(user.getId(), limit);
+            return ResponseEntity.ok(likedThreads);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).build();
+        }
+    }
+    
     // Get threads by hashtag
     @GetMapping("/hashtag/{hashtag}")
     public ResponseEntity<Page<ThreadDto>> getThreadsByHashtag(

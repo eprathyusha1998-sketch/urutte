@@ -18,6 +18,10 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
     
+    @JsonIgnore
+    @Column(nullable = true)
+    private String password;  // For email/password authentication
+    
     @Column(unique = true)
     private String username;  // @username for public profile
     
@@ -121,6 +125,9 @@ public class User {
 
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
+    
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
 
     public String getPicture() { return picture; }
     public void setPicture(String picture) { this.picture = picture; }

@@ -48,6 +48,9 @@ public class ThreadService {
     private HashtagRepository hashtagRepository;
     
     @Autowired
+    private UserService userService;
+    
+    @Autowired
     private ThreadHashtagRepository threadHashtagRepository;
     
     @Autowired
@@ -350,6 +353,21 @@ public class ThreadService {
         Page<com.urutte.model.Thread> threads = threadRepository.findTrendingThreads(since, pageable);
         
         return threads.map(thread -> convertToDto(thread, currentUserId));
+    }
+    
+    // Get liked threads by user
+    public List<ThreadDto> getLikedThreadsByUser(String userId, int limit) {
+        User user = userService.getUserById(userId);
+        List<com.urutte.model.Thread> likedThreads = threadLikeRepository.findThreadsLikedByUser(user);
+        
+        // Limit the results
+        if (likedThreads.size() > limit) {
+            likedThreads = likedThreads.subList(0, limit);
+        }
+        
+        return likedThreads.stream()
+                .map(thread -> convertToDto(thread, userId))
+                .collect(Collectors.toList());
     }
     
     // Helper method to add media to thread

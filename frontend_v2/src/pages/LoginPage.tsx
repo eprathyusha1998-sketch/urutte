@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { IonIcon } from '@ionic/react';
-import { logoFacebook, logoTwitter, logoGoogle } from 'ionicons/icons';
-import { authApi } from '../services/api';
+import { logoGoogle } from 'ionicons/icons';
+import { isAuthenticated, setStoredToken, removeStoredToken, isTokenExpired } from '../utils/auth';
+import { useNotification } from '../contexts/NotificationContext';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://urutte.com/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL;
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { showSuccess, showError } = useNotification();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
@@ -17,25 +19,32 @@ const LoginPage: React.FC = () => {
 
   useEffect(() => {
     // Check if user is already authenticated
-    const token = localStorage.getItem('access_token');
-    if (token) {
+    if (isAuthenticated()) {
       navigate('/feed');
+      return;
     }
 
     // Handle OAuth callback
     const token_param = searchParams.get('token');
     if (token_param) {
       try {
-        // Decode the Base64 encoded user ID
-        const decodedToken = atob(token_param);
-        localStorage.setItem('access_token', decodedToken);
+        // Check if token is expired
+        if (isTokenExpired(token_param)) {
+          showError('Token Expired', 'Your session has expired. Please log in again.');
+          removeStoredToken();
+          return;
+        }
+        
+        setStoredToken(token_param);
+        showSuccess('Welcome Back!', 'You have been successfully logged in.');
         navigate('/feed');
       } catch (error) {
-        console.error('Error decoding token:', error);
-        setError('Invalid token received. Please try logging in again.');
+        console.error('Error processing token:', error);
+        showError('Invalid Token', 'Invalid token received. Please try logging in again.');
+        removeStoredToken();
       }
     }
-  }, [navigate, searchParams]);
+  }, [navigate, searchParams, showError, showSuccess]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,20 +52,46 @@ const LoginPage: React.FC = () => {
     setLoading(true);
 
     try {
-      // Note: For OAuth2, we typically don't use username/password
-      // This is a fallback for testing. In production, use Google OAuth
-      console.log('Login:', { email, password, rememberMe });
-      
-      // Since we're using OAuth2, redirect to Google login
-      handleGoogleLogin();
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Store token and user data
+        setStoredToken(data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        
+        // Show success message
+        showSuccess('Welcome Back!', `Hello ${data.user.name}! You have been successfully logged in.`);
+        
+        // Navigate to feed
+        navigate('/feed');
+      } else {
+        showError('Login Failed', data.message || 'Login failed. Please try again.');
+      }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Login failed. Please try again.');
+      showError('Login Failed', 'Network error. Please check your connection and try again.');
+    } finally {
       setLoading(false);
     }
   };
 
   const handleGoogleLogin = () => {
     // Redirect to Spring Boot OAuth2 endpoint
+    if (!API_BASE_URL) {
+      console.error('API_BASE_URL is not defined. Please check your environment configuration.');
+      showError('Configuration Error', 'Application is not properly configured. Please refresh the page.');
+      return;
+    }
     const redirectUrl = `${API_BASE_URL.replace('/api', '')}/oauth2/authorization/google`;
     console.log('Redirecting to Google OAuth:', redirectUrl);
     window.location.href = redirectUrl;
@@ -69,8 +104,11 @@ const LoginPage: React.FC = () => {
         <div className="w-full lg:max-w-sm mx-auto space-y-10" uk-scrollspy="target: > *; cls: uk-animation-scale-up; delay: 100 ;repeat: true">
           
           {/* Logo */}
-          <a href="#"> <img src="/assets/images/logo.png" className="w-28 absolute top-10 left-10 dark:hidden" alt="" /></a>
-          <a href="#"> <img src="/assets/images/logo-light.png" className="w-28 absolute top-10 left-10 hidden dark:!block" alt="" /></a>
+        <div className="flex justify-center mb-8">
+          <div className="w-12 h-12 bg-black rounded-lg flex items-center justify-center">
+            <span className="text-white font-bold text-2xl">U</span>
+          </div>
+        </div>
 
           {/* Title */}
           <div>
@@ -136,7 +174,7 @@ const LoginPage: React.FC = () => {
                 />
                 <label htmlFor="rememberme" className="font-normal">Remember me</label>
               </div>
-              <a href="#" className="text-blue-700">Forgot password </a>
+              <button type="button" className="text-blue-700 hover:underline">Forgot password</button>
             </div>
 
             {/* Submit Button */}
@@ -165,12 +203,6 @@ const LoginPage: React.FC = () => {
               > 
                 <IonIcon icon={logoGoogle} className="text-lg" /> Google  
               </button>
-              <a href="#" className="button flex-1 flex items-center justify-center gap-2 bg-primary text-white text-sm"> 
-                <IonIcon icon={logoFacebook} className="text-lg" /> Facebook  
-              </a>
-              <a href="#" className="button flex-1 flex items-center justify-center gap-2 bg-sky-600 text-white text-sm"> 
-                <IonIcon icon={logoTwitter} /> Twitter  
-              </a>
             </div>
             
           </form>
@@ -186,7 +218,9 @@ const LoginPage: React.FC = () => {
               <img src="/assets/images/post/img-3.jpg" alt="" className="w-full h-full object-cover uk-animation-kenburns uk-animation-reverse uk-transform-origin-center-left" />
               <div className="absolute bottom-0 w-full uk-tr ansition-slide-bottom-small z-10">
                 <div className="max-w-xl w-full mx-auto pb-32 px-5 z-30 relative" uk-scrollspy="target: > *; cls: uk-animation-scale-up; delay: 100 ;repeat: true"> 
-                  <img className="w-12" src="/assets/images/logo-icon.png" alt="Socialite" />
+                  <div className="w-12 h-12 bg-black rounded-lg flex items-center justify-center">
+                    <span className="text-white font-bold text-lg">U</span>
+                  </div>
                   <h4 className="!text-white text-2xl font-semibold mt-7" uk-slideshow-parallax="y: 600,0,0">  Connect With Friends </h4> 
                   <p className="!text-white text-lg mt-7 leading-8" uk-slideshow-parallax="y: 800,0,0;"> This phrase is more casual and playful. It suggests that you are keeping your friends updated on what's happening in your life.</p>   
                 </div> 
@@ -197,7 +231,9 @@ const LoginPage: React.FC = () => {
               <img src="/assets/images/post/img-2.jpg" alt="" className="w-full h-full object-cover uk-animation-kenburns uk-animation-reverse uk-transform-origin-center-left" />
               <div className="absolute bottom-0 w-full uk-tr ansition-slide-bottom-small z-10">
                 <div className="max-w-xl w-full mx-auto pb-32 px-5 z-30 relative" uk-scrollspy="target: > *; cls: uk-animation-scale-up; delay: 100 ;repeat: true"> 
-                  <img className="w-12" src="/assets/images/logo-icon.png" alt="Socialite" />
+                  <div className="w-12 h-12 bg-black rounded-lg flex items-center justify-center">
+                    <span className="text-white font-bold text-lg">U</span>
+                  </div>
                   <h4 className="!text-white text-2xl font-semibold mt-7" uk-slideshow-parallax="y: 800,0,0">  Share Your Moments </h4> 
                   <p className="!text-white text-lg mt-7 leading-8" uk-slideshow-parallax="y: 800,0,0;"> Share your life moments with friends and family. Connect, engage, and build lasting relationships.</p>   
                 </div> 
