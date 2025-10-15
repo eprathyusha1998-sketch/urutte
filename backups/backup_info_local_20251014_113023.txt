@@ -1,0 +1,14 @@
+Urutte Backup Information
+========================
+Environment: local
+Timestamp: 20251014_113023
+Date: Tue Oct 14 11:30:23 CDT 2025
+Docker Compose Version: Docker Compose version v2.39.4-desktop.1
+Docker Version: Docker version 28.4.0, build d8eb465
+
+Backed up files:
+- database_local_20251014_113023.sql
+- uploads_local_20251014_113023.tar.gz
+
+To restore this backup:
+1. Run: ./scripts/restore-data.sh local database_local_20251014_113023.sql uploads_local_20251014_113023.tar.gz
