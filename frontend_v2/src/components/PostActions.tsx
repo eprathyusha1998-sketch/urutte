@@ -284,7 +284,7 @@ const PostActions: React.FC<PostActionsProps> = ({
                   <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-slate-600 flex items-center justify-center">
                     <div className={`w-6 h-6 rounded-full ${getInitialsBackgroundColor(post.userName || '')} flex items-center justify-center`}>
                       <span className="text-white text-xs font-semibold">
-                        {generateInitials(post.userName || 'U')}
+                        {generateInitials(post.userName || 'உ')}
                       </span>
                     </div>
                   </div>

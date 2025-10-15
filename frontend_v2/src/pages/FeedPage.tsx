@@ -11,6 +11,7 @@ import ThreadCard from '../components/ThreadCard';
 import NewThreadModal from '../components/NewThreadModal';
 import SuggestedUsers from '../components/SuggestedUsers';
 import FollowRequests from '../components/FollowRequests';
+import TopicSuggestionPanel from '../components/TopicSuggestionPanel';
 import { Thread, User } from '../types.d';
 import { generateInitials, getInitialsBackgroundColor } from '../utils/profileUtils';
 import { useInfiniteScroll } from '../hooks';
@@ -294,6 +295,7 @@ const FeedPage: React.FC = () => {
             <div className="sticky top-4 space-y-4">
               <FollowRequests currentUser={currentUser} />
               <SuggestedUsers currentUser={currentUser} />
+              <TopicSuggestionPanel currentUser={currentUser} />
             </div>
           </div>
         </div>
@@ -330,7 +332,7 @@ const FeedPage: React.FC = () => {
                   <div className="w-6 h-6 rounded-full bg-gray-100 dark:bg-slate-600 flex items-center justify-center">
                     <div className={`w-5 h-5 rounded-full ${getInitialsBackgroundColor(repostingPost.userName || '')} flex items-center justify-center`}>
                       <span className="text-white text-xs font-semibold">
-                        {generateInitials(repostingPost.userName || 'U')}
+                        {generateInitials(repostingPost.userName || 'உ')}
                       </span>
                     </div>
                   </div>

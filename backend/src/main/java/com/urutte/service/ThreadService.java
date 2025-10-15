@@ -4,6 +4,7 @@ import com.urutte.dto.ThreadDto;
 import com.urutte.dto.ThreadMediaDto;
 import com.urutte.dto.ThreadPollDto;
 import com.urutte.dto.PollOptionDto;
+import com.urutte.exception.ThreadAccessDeniedException;
 import com.urutte.model.*;
 import com.urutte.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,6 +46,9 @@ public class ThreadService {
     private ThreadMentionRepository threadMentionRepository;
     
     @Autowired
+    private FollowRepository followRepository;
+    
+    @Autowired
     private HashtagRepository hashtagRepository;
     
     @Autowired
@@ -68,16 +72,38 @@ public class ThreadService {
         
         com.urutte.model.Thread thread = new com.urutte.model.Thread(content, user);
         
-        // Set reply permission
+        // Set reply permission and view privacy
         if (replyPermission != null && !replyPermission.isEmpty()) {
             try {
-                thread.setReplyPermission(ReplyPermission.valueOf(replyPermission.toUpperCase()));
+                ReplyPermission permission = ReplyPermission.valueOf(replyPermission.toUpperCase());
+                thread.setReplyPermission(permission);
+                
+                // Set view privacy based on reply permission
+                switch (permission) {
+                    case ANYONE:
+                        thread.setIsPublic(true); // Public - anyone can view
+                        break;
+                    case FOLLOWERS:
+                        thread.setIsPublic(false); // Private - only followers can view
+                        break;
+                    case FOLLOWING:
+                        thread.setIsPublic(false); // Private - only people I follow can view
+                        break;
+                    case MENTIONED_ONLY:
+                        thread.setIsPublic(false); // Private - only mentioned users can view
+                        break;
+                    default:
+                        thread.setIsPublic(true);
+                        break;
+                }
             } catch (IllegalArgumentException e) {
                 // Default to ANYONE if invalid permission
                 thread.setReplyPermission(ReplyPermission.ANYONE);
+                thread.setIsPublic(true);
             }
         } else {
             thread.setReplyPermission(ReplyPermission.ANYONE);
+            thread.setIsPublic(true);
         }
         
         // Handle replies and thread hierarchy
@@ -170,9 +196,55 @@ public class ThreadService {
     // Get main threads (feed)
     public Page<ThreadDto> getMainThreads(String currentUserId, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<com.urutte.model.Thread> threads = threadRepository.findByParentThreadIsNullAndIsDeletedFalseAndIsPublicTrueOrderByCreatedAtDesc(pageable);
+        
+        // Get public threads and followers-only threads for current user
+        Page<com.urutte.model.Thread> threads;
+        
+        if (currentUserId != null && !currentUserId.isEmpty()) {
+            // Get public threads + followers-only threads from users that current user follows
+            threads = threadRepository.findMainThreadsForUser(currentUserId, pageable);
+        } else {
+            // For anonymous users, only show public threads
+            threads = threadRepository.findByParentThreadIsNullAndIsDeletedFalseAndIsPublicTrueOrderByCreatedAtDesc(pageable);
+        }
         
         return threads.map(thread -> convertToDto(thread, currentUserId));
+    }
+    
+    // Get user's own threads
+    public Page<ThreadDto> getUserThreads(String userId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        Page<com.urutte.model.Thread> threads = threadRepository.findByUserAndIsDeletedFalseOrderByCreatedAtDesc(user, pageable);
+        
+        return threads.map(thread -> convertToDto(thread, userId));
+    }
+    
+    // Edit a thread
+    public ThreadDto editThread(Long threadId, String newContent, String userId) {
+        com.urutte.model.Thread thread = threadRepository.findById(threadId)
+            .orElseThrow(() -> new RuntimeException("Thread not found"));
+        
+        // Check if the user owns this thread
+        if (!thread.getUser().getId().equals(userId)) {
+            throw new RuntimeException("You can only edit your own threads");
+        }
+        
+        if (thread.getIsDeleted()) {
+            throw new RuntimeException("Cannot edit deleted thread");
+        }
+        
+        // Update the content
+        thread.setContent(newContent);
+        thread.setIsEdited(true);
+        thread.setEditedAt(LocalDateTime.now());
+        
+        // Save the updated thread
+        thread = threadRepository.save(thread);
+        
+        return convertToDto(thread, userId);
     }
     
     // Get thread by ID
@@ -182,6 +254,43 @@ public class ThreadService {
         
         if (thread.getIsDeleted()) {
             throw new RuntimeException("Thread not found");
+        }
+        
+        // Check if user has permission to view this thread
+        if (!thread.getIsPublic()) {
+            if (currentUserId == null || currentUserId.isEmpty()) {
+                throw new ThreadAccessDeniedException("You must be logged in to view this thread");
+            }
+            
+            boolean hasAccess = false;
+            
+            switch (thread.getReplyPermission()) {
+                case FOLLOWERS:
+                    // Check if current user follows the thread author
+                    hasAccess = followRepository.existsByFollowerIdAndFollowingId(
+                        currentUserId, thread.getUser().getId());
+                    break;
+                    
+                case FOLLOWING:
+                    // Check if thread author follows the current user
+                    hasAccess = followRepository.existsByFollowerIdAndFollowingId(
+                        thread.getUser().getId(), currentUserId);
+                    break;
+                    
+                case MENTIONED_ONLY:
+                    // Check if current user is mentioned in this thread
+                    hasAccess = threadMentionRepository.existsByThreadAndMentionedUserId(
+                        thread, currentUserId);
+                    break;
+                    
+                default:
+                    hasAccess = false;
+                    break;
+            }
+            
+            if (!hasAccess) {
+                throw new ThreadAccessDeniedException("You don't have permission to view this thread");
+            }
         }
         
         return convertToDto(thread, currentUserId);

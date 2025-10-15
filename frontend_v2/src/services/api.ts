@@ -97,6 +97,27 @@ export const threadsApi = {
     return response.data;
   },
 
+  // Get user's own threads
+  getMyThreads: async (page = 0, size = 20) => {
+    const response = await api.get('/threads/my-threads', {
+      params: { page, size },
+    });
+    return response.data;
+  },
+
+  // Edit a thread
+  editThread: async (threadId: number, content: string) => {
+    const formData = new FormData();
+    formData.append('content', content);
+    
+    const response = await api.put(`/threads/${threadId}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+
   // Create a new thread
   createThread: async (content: string, mediaFileOrFiles?: File | File[], parentThreadId?: number, replyPermission: 'ANYONE' | 'FOLLOWERS' | 'FOLLOWING' | 'MENTIONED_ONLY' = 'ANYONE') => {
     // Convert single file to array for consistent handling
@@ -518,6 +539,50 @@ export const hashtagApi = {
     const response = await api.get('/hashtags/popular', {
       params: { limit },
     });
+    return response.data;
+  },
+};
+
+export const topicsApi = {
+  getAvailableTopics: async () => {
+    const response = await api.get('/topics/available');
+    return response.data;
+  },
+
+  getTopicSuggestions: async (limit = 5) => {
+    const response = await api.get('/topics/suggestions', {
+      params: { limit },
+    });
+    return response.data;
+  },
+
+  getLikedTopics: async () => {
+    const response = await api.get('/topics/liked');
+    return response.data;
+  },
+
+  likeTopic: async (topicId: string) => {
+    const response = await api.post(`/topics/${topicId}/like`);
+    return response.data;
+  },
+
+  unlikeTopic: async (topicId: string) => {
+    const response = await api.delete(`/topics/${topicId}/like`);
+    return response.data;
+  },
+
+  isTopicLiked: async (topicId: string) => {
+    const response = await api.get(`/topics/${topicId}/liked`);
+    return response.data;
+  },
+
+  getAllTopics: async () => {
+    const response = await api.get('/topics/all');
+    return response.data;
+  },
+
+  initializeTopics: async () => {
+    const response = await api.post('/topics/initialize');
     return response.data;
   },
 };

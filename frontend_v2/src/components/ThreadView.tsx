@@ -164,7 +164,7 @@ const ThreadView: React.FC<ThreadViewProps> = ({
                 <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-slate-600 flex items-center justify-center">
                   <div className={`w-8 h-8 rounded-full ${getInitialsBackgroundColor(currentUser?.name || '')} flex items-center justify-center`}>
                     <span className="text-white text-sm font-semibold">
-                      {generateInitials(currentUser?.name || 'U')}
+                      {generateInitials(currentUser?.name || 'உ')}
                     </span>
                   </div>
                 </div>
@@ -195,7 +195,7 @@ const ThreadView: React.FC<ThreadViewProps> = ({
                 <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-slate-600 flex items-center justify-center">
                   <div className={`w-8 h-8 rounded-full ${getInitialsBackgroundColor(currentUser?.name || '')} flex items-center justify-center`}>
                     <span className="text-white text-sm font-semibold">
-                      {generateInitials(currentUser?.name || 'U')}
+                      {generateInitials(currentUser?.name || 'உ')}
                     </span>
                   </div>
                 </div>

@@ -9,6 +9,7 @@ import ThreadPage from './pages/ThreadPage';
 import ProfilePage from './pages/ProfilePage';
 import LikesPage from './pages/LikesPage';
 import SearchPage from './pages/SearchPage';
+import MyPostsPage from './pages/MyPostsPage';
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
           <Route path="/thread/:threadId" element={<ThreadPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/likes" element={<LikesPage />} />
+          <Route path="/mythread" element={<MyPostsPage />} />
           <Route path="/search" element={<SearchPage />} />
           {/* Redirect all other routes to feed */}
           <Route path="*" element={<Navigate to="/feed" replace />} />

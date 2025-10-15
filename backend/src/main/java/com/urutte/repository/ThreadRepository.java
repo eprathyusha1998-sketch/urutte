@@ -88,4 +88,15 @@ public interface ThreadRepository extends JpaRepository<Thread, Long> {
     // Find threads with specific engagement threshold
     @Query("SELECT t FROM Thread t WHERE t.likesCount >= :minLikes AND t.isDeleted = false AND t.isPublic = true ORDER BY t.likesCount DESC, t.createdAt DESC")
     Page<Thread> findByMinLikes(@Param("minLikes") Integer minLikes, Pageable pageable);
+    
+    // Find main threads for a specific user (handles all 4 privacy levels)
+    @Query("SELECT t FROM Thread t WHERE t.parentThread IS NULL AND t.isDeleted = false AND " +
+           "(t.isPublic = true OR " + // Public threads (ANYONE)
+           "(t.isPublic = false AND t.replyPermission = 'FOLLOWERS' AND t.user IN " +
+           "(SELECT f.following FROM Follow f WHERE f.follower.id = :userId)) OR " + // Followers-only threads from followed users
+           "(t.isPublic = false AND t.replyPermission = 'FOLLOWING' AND t.user.id = :userId) OR " + // My threads with FOLLOWING permission
+           "(t.isPublic = false AND t.replyPermission = 'MENTIONED_ONLY' AND t.id IN " +
+           "(SELECT tm.thread.id FROM ThreadMention tm WHERE tm.mentionedUser.id = :userId))) " + // Threads where I'm mentioned
+           "ORDER BY t.createdAt DESC")
+    Page<Thread> findMainThreadsForUser(@Param("userId") String userId, Pageable pageable);
 }

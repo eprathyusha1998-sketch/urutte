@@ -9,7 +9,8 @@ import {
   add,
   heart,
   logOut,
-  settings
+  settings,
+  documentText
 } from 'ionicons/icons';
 import { generateInitials, getInitialsBackgroundColor } from '../utils/profileUtils';
 import { getProfileImageUrl } from '../utils/mediaUtils';
@@ -71,7 +72,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser, onToggleTheme, isDarkMod
           <div className="mb-8">
             <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center cursor-pointer"
                  onClick={() => navigate('/feed')}>
-              <span className="text-white font-bold text-lg">U</span>
+              <span className="text-white font-bold text-lg">உ</span>
             </div>
           </div>
 
@@ -142,6 +143,25 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser, onToggleTheme, isDarkMod
               />
             </button>
 
+            {/* My Posts */}
+            <button
+              onClick={() => handleNavigation('/mythread')}
+              className={`w-12 h-12 flex items-center justify-center rounded-full transition-colors ${
+                location.pathname === '/mythread' && !isCreateModalOpen
+                  ? 'bg-gray-100 dark:bg-slate-600' 
+                  : 'hover:bg-gray-50 dark:hover:bg-slate-700'
+              }`}
+            >
+              <IonIcon 
+                icon={documentText} 
+                className={`text-2xl ${
+                  location.pathname === '/mythread' && !isCreateModalOpen
+                    ? 'text-black dark:text-white' 
+                    : 'text-gray-400 dark:text-gray-500'
+                }`} 
+              />
+            </button>
+
             {/* Notifications */}
             <button
               onClick={() => handleNavigation('/notifications')}
@@ -183,7 +203,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser, onToggleTheme, isDarkMod
 
               {/* Profile Dropdown */}
               {showProfileDropdown && (
-                <div className="absolute left-16 top-0 bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-gray-200 dark:border-slate-700 py-3 min-w-[180px] max-w-[250px] z-[9999]">
+                <div className="absolute left-16 top-0 bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-gray-200 dark:border-slate-700 py-3 min-w-[220px] max-w-[320px] z-[9999]">
                   <div className="px-3 py-2 border-b border-gray-100 dark:border-slate-700">
                     <div className="flex items-center gap-3">
                       {currentUser?.picture ? (
@@ -195,7 +215,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser, onToggleTheme, isDarkMod
                       ) : (
                         <div className={`w-8 h-8 rounded-full ${getInitialsBackgroundColor(currentUser?.name || '')} flex items-center justify-center`}>
                           <span className="text-white text-sm font-semibold">
-                            {generateInitials(currentUser?.name || 'U')}
+                            {generateInitials(currentUser?.name || 'உ')}
                           </span>
                         </div>
                       )}

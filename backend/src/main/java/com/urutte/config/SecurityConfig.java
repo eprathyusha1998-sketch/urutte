@@ -62,6 +62,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/ai-content/**").permitAll()
                 .requestMatchers("/api/ai-follow-requests/**").permitAll()
                 .requestMatchers("/api/threads/**").permitAll()
+                .requestMatchers("/api/topics/all").permitAll()
                 .requestMatchers("/api/**").authenticated()
                 .anyRequest().permitAll()
             )

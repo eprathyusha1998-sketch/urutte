@@ -9,7 +9,8 @@ import {
   add,
   heart,
   logOut,
-  settings
+  settings,
+  documentText
 } from 'ionicons/icons';
 import { Avatar, Button, Card } from './ui';
 import { useClickOutside } from '../hooks';
@@ -39,6 +40,7 @@ const navigationItems: NavigationItem[] = [
   { path: ROUTES.FEED, icon: home, label: 'Home' },
   { path: ROUTES.SEARCH, icon: search, label: 'Search' },
   { path: ROUTES.LIKES, icon: heart, label: 'Likes' },
+  { path: ROUTES.MY_POSTS, icon: documentText, label: 'My Posts' },
   { path: ROUTES.NOTIFICATIONS, icon: notifications, label: 'Notifications' }
 ];
 
@@ -108,7 +110,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               onClick={() => navigate(ROUTES.FEED)}
               className="w-8 h-8 bg-black rounded-lg flex items-center justify-center p-0"
             >
-              <span className="text-white font-bold text-lg">U</span>
+              <span className="text-white font-bold text-lg">உ</span>
             </Button>
           </div>
 
@@ -154,7 +156,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
               {/* Profile Dropdown */}
               {showProfileDropdown && (
-                <Card className="absolute left-16 top-0 rounded-xl shadow-2xl py-3 min-w-[180px] max-w-[250px] z-[9999]">
+                <Card className="absolute left-16 top-0 rounded-xl shadow-2xl py-3 min-w-[220px] max-w-[320px] z-[9999]">
                   <div className="px-3 py-2 border-b border-gray-100 dark:border-slate-700">
                     <div className="flex items-center gap-3">
                       <Avatar

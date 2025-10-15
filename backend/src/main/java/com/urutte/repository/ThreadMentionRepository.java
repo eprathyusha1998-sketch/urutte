@@ -22,4 +22,7 @@ public interface ThreadMentionRepository extends JpaRepository<ThreadMention, Lo
     
     // Count mentions of a user
     long countByMentionedUser(User mentionedUser);
+    
+    // Check if a user is mentioned in a specific thread
+    boolean existsByThreadAndMentionedUserId(Thread thread, String mentionedUserId);
 }

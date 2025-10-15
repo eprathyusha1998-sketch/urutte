@@ -185,7 +185,7 @@ const ThreadReply: React.FC<ThreadReplyProps> = ({
               <div className="w-6 h-6 rounded-full bg-gray-100 dark:bg-slate-600 flex items-center justify-center">
                 <div className={`w-5 h-5 rounded-full ${getInitialsBackgroundColor(currentUser?.name || '')} flex items-center justify-center`}>
                   <span className="text-white text-xs font-semibold">
-                    {generateInitials(currentUser?.name || 'U')}
+                    {generateInitials(currentUser?.name || 'உ')}
                   </span>
                 </div>
               </div>

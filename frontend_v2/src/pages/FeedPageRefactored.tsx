@@ -8,6 +8,7 @@ import ThreadCard from '../components/ThreadCardRefactored';
 import NewThreadModal from '../components/NewThreadModal';
 import SuggestedUsers from '../components/SuggestedUsers';
 import FollowRequests from '../components/FollowRequests';
+import TopicSuggestionPanel from '../components/TopicSuggestionPanel';
 import { ROUTES, DYNAMIC_ROUTES } from '../constants';
 
 const FeedPage: React.FC = () => {
@@ -212,6 +213,7 @@ const FeedPage: React.FC = () => {
             <div className="sticky top-4 space-y-4">
               <FollowRequests currentUser={currentUser} />
               <SuggestedUsers currentUser={currentUser} />
+              <TopicSuggestionPanel currentUser={currentUser} />
             </div>
           </div>
         </div>

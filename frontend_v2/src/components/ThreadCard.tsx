@@ -14,7 +14,8 @@ import {
   happy,
   sad,
   flame,
-  thumbsUp
+  thumbsUp,
+  pencil
 } from 'ionicons/icons';
 import { Thread, User } from '../types.d';
 import { getMediaUrl } from '../utils/mediaUtils';
@@ -27,6 +28,7 @@ interface ThreadCardProps {
   onLike: (threadId: number) => void;
   onRepost: (threadId: number, quoteContent?: string) => void;
   onDelete: (threadId: number) => void;
+  onEdit?: (thread: Thread) => void;
   onReply?: (threadId: number) => void;
   onBookmark?: (threadId: number) => void;
   onReaction?: (threadId: number, reactionType: string) => void;
@@ -41,6 +43,7 @@ const ThreadCard: React.FC<ThreadCardProps> = ({
   onLike,
   onRepost,
   onDelete,
+  onEdit,
   onReply,
   onBookmark,
   onReaction,
@@ -58,6 +61,13 @@ const ThreadCard: React.FC<ThreadCardProps> = ({
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
     onDelete(thread.id);
+  };
+
+  const handleEdit = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onEdit) {
+      onEdit(thread);
+    }
   };
 
   const handleLike = (e: React.MouseEvent) => {
@@ -126,7 +136,7 @@ const ThreadCard: React.FC<ThreadCardProps> = ({
       
       const diffInSeconds = Math.floor((now.getTime() - time.getTime()) / 1000);
 
-      if (diffInSeconds < 60) return `${diffInSeconds}s`;
+      if (diffInSeconds < 60) return 'now';
       if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m`;
       if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h`;
       if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 86400)}d`;
@@ -236,7 +246,7 @@ const ThreadCard: React.FC<ThreadCardProps> = ({
             >
               <div className={`w-8 h-8 rounded-full ${getInitialsBackgroundColor(thread.userName || '')} flex items-center justify-center`}>
                 <span className="text-white text-sm font-semibold">
-                  {generateInitials(thread.userName || 'U')}
+                  {generateInitials(thread.userName || 'உ')}
                 </span>
               </div>
             </div>
@@ -257,13 +267,24 @@ const ThreadCard: React.FC<ThreadCardProps> = ({
         </div>
         
         {currentUser?.id === thread.userId && (
-          <button
-            onClick={handleDelete}
-            className="text-gray-400 hover:text-red-500 transition-colors"
-            title="Delete thread"
-          >
-            <IonIcon icon={closeOutline} className="text-lg" />
-          </button>
+          <div className="flex items-center gap-2">
+            {onEdit && (
+              <button
+                onClick={handleEdit}
+                className="text-gray-400 hover:text-blue-500 transition-colors"
+                title="Edit thread"
+              >
+                <IonIcon icon={pencil} className="text-lg" />
+              </button>
+            )}
+            <button
+              onClick={handleDelete}
+              className="text-gray-400 hover:text-red-500 transition-colors"
+              title="Delete thread"
+            >
+              <IonIcon icon={closeOutline} className="text-lg" />
+            </button>
+          </div>
         )}
       </div>
 
@@ -286,7 +307,7 @@ const ThreadCard: React.FC<ThreadCardProps> = ({
                 <div className="w-full h-full bg-gray-100 dark:bg-slate-600 flex items-center justify-center">
                   <div className={`w-5 h-5 rounded-full ${getInitialsBackgroundColor(thread.quotedThread.userName || '')} flex items-center justify-center`}>
                     <span className="text-white text-xs font-semibold">
-                      {generateInitials(thread.quotedThread.userName || 'U')}
+                      {generateInitials(thread.quotedThread.userName || 'உ')}
                     </span>
                   </div>
                 </div>

@@ -1,6 +1,7 @@
 package com.urutte.controller;
 
 import com.urutte.dto.ThreadDto;
+import com.urutte.exception.ThreadAccessDeniedException;
 import com.urutte.model.ReactionType;
 import com.urutte.model.User;
 import com.urutte.service.MediaUploadService;
@@ -175,7 +176,7 @@ public class ThreadController {
     
     // Get thread by ID
     @GetMapping("/{threadId}")
-    public ResponseEntity<ThreadDto> getThreadById(
+    public ResponseEntity<?> getThreadById(
             @PathVariable Long threadId,
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @AuthenticationPrincipal OidcUser principal) {
@@ -186,8 +187,55 @@ public class ThreadController {
         try {
             ThreadDto thread = threadService.getThreadById(threadId, userId);
             return ResponseEntity.ok(thread);
+        } catch (ThreadAccessDeniedException e) {
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", "ACCESS_DENIED");
+            errorResponse.put("message", e.getMessage());
+            return ResponseEntity.status(403).body(errorResponse);
         } catch (Exception e) {
             return ResponseEntity.status(404).build();
+        }
+    }
+    
+    // Get user's own threads
+    @GetMapping("/my-threads")
+    public ResponseEntity<Page<ThreadDto>> getMyThreads(
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "20") int size,
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @AuthenticationPrincipal OidcUser principal) {
+        
+        User user = getCurrentUser(authHeader, principal);
+        if (user == null) {
+            return ResponseEntity.status(401).build();
+        }
+        
+        try {
+            Page<ThreadDto> threads = threadService.getUserThreads(user.getId(), page, size);
+            return ResponseEntity.ok(threads);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).build();
+        }
+    }
+    
+    // Edit a thread
+    @PutMapping("/{threadId}")
+    public ResponseEntity<ThreadDto> editThread(
+            @PathVariable Long threadId,
+            @RequestParam("content") String content,
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @AuthenticationPrincipal OidcUser principal) {
+        
+        User user = getCurrentUser(authHeader, principal);
+        if (user == null) {
+            return ResponseEntity.status(401).build();
+        }
+        
+        try {
+            ThreadDto updatedThread = threadService.editThread(threadId, content, user.getId());
+            return ResponseEntity.ok(updatedThread);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).build();
         }
     }
     

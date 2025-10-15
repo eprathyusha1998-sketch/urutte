@@ -1,16 +1,16 @@
 package com.urutte.model;
 
 import jakarta.persistence.*;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
+import java.time.Instant;
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.Arrays;
 
 @Entity
 @Table(name = "topics")
 public class Topic {
     
     @Id
+    @Column(name = "id")
     private String id;
     
     @Column(nullable = false, unique = true)
@@ -19,128 +19,184 @@ public class Topic {
     @Column(columnDefinition = "TEXT")
     private String description;
     
-    @Column(nullable = false)
+    @Column(name = "ai_prompt", columnDefinition = "TEXT")
+    private String aiPrompt;
+    
+    @Column(name = "category")
     private String category;
     
-    @Column(name = "is_active", nullable = false)
-    private Boolean isActive = true;
+    @Column(name = "keywords", columnDefinition = "TEXT")
+    private String keywords;
     
-    @Column(nullable = false)
-    private Integer priority = 1; // 1-10, higher number = higher priority
+    @Column(name = "priority")
+    private Integer priority = 5;
     
-    @Column(name = "threads_per_run", nullable = false)
-    private Integer threadsPerRun = 3; // Number of threads to generate per run
+    @Column(name = "threads_per_run")
+    private Integer threadsPerRun = 3;
     
-    @Column(columnDefinition = "TEXT")
-    private String keywords; // Comma-separated keywords for content generation
+    @Column(name = "threads_generated")
+    private Integer threadsGenerated = 0;
     
-    @Column(name = "search_queries", columnDefinition = "TEXT")
-    private String searchQueries; // Comma-separated search queries
-    
-    @Column(name = "last_generated_at", nullable = false)
+    @Column(name = "last_generated_at")
     private LocalDateTime lastGeneratedAt;
     
-    @Column(name = "total_threads_generated", nullable = false)
-    private Integer totalThreadsGenerated = 0;
+    @Column(name = "is_active")
+    private Boolean isActive = true;
     
-    @CreationTimestamp
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    @Column(name = "created_at")
+    private Instant createdAt;
     
-    @UpdateTimestamp
-    @Column(nullable = false)
-    private LocalDateTime updatedAt;
+    @Column(name = "updated_at")
+    private Instant updatedAt;
     
     // Constructors
-    public Topic() {}
-    
-    public Topic(String id, String name, String description, String category, String keywords, String searchQueries) {
-        this.id = id;
-        this.name = name;
-        this.description = description;
-        this.category = category;
-        this.keywords = keywords;
-        this.searchQueries = searchQueries;
-        this.isActive = true;
-        this.priority = 1;
-        this.threadsPerRun = 3;
-        this.totalThreadsGenerated = 0;
-        this.lastGeneratedAt = LocalDateTime.now().minusHours(24); // Start with old timestamp
+    public Topic() {
+        this.createdAt = Instant.now();
+        this.updatedAt = Instant.now();
     }
     
-    public Topic(String name, String description, String category, String keywords, String searchQueries) {
+    public Topic(String name, String description, String aiPrompt) {
+        this();
         this.name = name;
         this.description = description;
+        this.aiPrompt = aiPrompt;
+    }
+    
+    public Topic(String name, String description, String aiPrompt, String category, String keywords) {
+        this();
+        this.name = name;
+        this.description = description;
+        this.aiPrompt = aiPrompt;
         this.category = category;
         this.keywords = keywords;
-        this.searchQueries = searchQueries;
-        this.isActive = true;
-        this.priority = 1;
-        this.threadsPerRun = 3;
-        this.totalThreadsGenerated = 0;
-        this.lastGeneratedAt = LocalDateTime.now().minusHours(24); // Start with old timestamp
     }
     
     // Getters and Setters
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
+    public String getId() {
+        return id;
+    }
     
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+    public void setId(String id) {
+        this.id = id;
+    }
     
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
+    public String getName() {
+        return name;
+    }
     
-    public String getCategory() { return category; }
-    public void setCategory(String category) { this.category = category; }
+    public void setName(String name) {
+        this.name = name;
+    }
     
-    public Boolean getIsActive() { return isActive; }
-    public void setIsActive(Boolean isActive) { this.isActive = isActive; }
+    public String getDescription() {
+        return description;
+    }
     
-    public Integer getPriority() { return priority; }
-    public void setPriority(Integer priority) { this.priority = priority; }
+    public void setDescription(String description) {
+        this.description = description;
+    }
     
-    public Integer getThreadsPerRun() { return threadsPerRun; }
-    public void setThreadsPerRun(Integer threadsPerRun) { this.threadsPerRun = threadsPerRun; }
+    public String getAiPrompt() {
+        return aiPrompt;
+    }
     
-    public String getKeywords() { return keywords; }
-    public void setKeywords(String keywords) { this.keywords = keywords; }
+    public void setAiPrompt(String aiPrompt) {
+        this.aiPrompt = aiPrompt;
+    }
     
-    public String getSearchQueries() { return searchQueries; }
-    public void setSearchQueries(String searchQueries) { this.searchQueries = searchQueries; }
+    public Boolean getIsActive() {
+        return isActive;
+    }
     
-    public LocalDateTime getLastGeneratedAt() { return lastGeneratedAt; }
-    public void setLastGeneratedAt(LocalDateTime lastGeneratedAt) { this.lastGeneratedAt = lastGeneratedAt; }
+    public void setIsActive(Boolean isActive) {
+        this.isActive = isActive;
+    }
     
-    public Integer getTotalThreadsGenerated() { return totalThreadsGenerated; }
-    public void setTotalThreadsGenerated(Integer totalThreadsGenerated) { this.totalThreadsGenerated = totalThreadsGenerated; }
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
     
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public void setCreatedAt(Instant createdAt) {
+        this.createdAt = createdAt;
+    }
     
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    public Instant getUpdatedAt() {
+        return updatedAt;
+    }
+    
+    public void setUpdatedAt(Instant updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+    
+    public String getCategory() {
+        return category;
+    }
+    
+    public void setCategory(String category) {
+        this.category = category;
+    }
+    
+    public String getKeywords() {
+        return keywords;
+    }
+    
+    public void setKeywords(String keywords) {
+        this.keywords = keywords;
+    }
+    
+    public Integer getPriority() {
+        return priority;
+    }
+    
+    public void setPriority(Integer priority) {
+        this.priority = priority;
+    }
+    
+    public Integer getThreadsPerRun() {
+        return threadsPerRun;
+    }
+    
+    public void setThreadsPerRun(Integer threadsPerRun) {
+        this.threadsPerRun = threadsPerRun;
+    }
+    
+    public Integer getThreadsGenerated() {
+        return threadsGenerated;
+    }
+    
+    public void setThreadsGenerated(Integer threadsGenerated) {
+        this.threadsGenerated = threadsGenerated;
+    }
+    
+    public LocalDateTime getLastGeneratedAt() {
+        return lastGeneratedAt;
+    }
+    
+    public void setLastGeneratedAt(LocalDateTime lastGeneratedAt) {
+        this.lastGeneratedAt = lastGeneratedAt;
+    }
     
     // Helper methods
-    public void incrementThreadsGenerated() {
-        this.totalThreadsGenerated = (this.totalThreadsGenerated == null ? 0 : this.totalThreadsGenerated) + 1;
+    public String[] getKeywordsArray() {
+        if (keywords == null || keywords.trim().isEmpty()) {
+            return new String[0];
+        }
+        return Arrays.stream(keywords.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .toArray(String[]::new);
     }
     
     public void updateLastGeneratedAt() {
         this.lastGeneratedAt = LocalDateTime.now();
     }
     
-    public String[] getKeywordsArray() {
-        if (keywords == null || keywords.trim().isEmpty()) {
-            return new String[0];
-        }
-        return keywords.split(",");
+    public void incrementThreadsGenerated() {
+        this.threadsGenerated = (this.threadsGenerated == null ? 0 : this.threadsGenerated) + 1;
     }
     
-    public String[] getSearchQueriesArray() {
-        if (searchQueries == null || searchQueries.trim().isEmpty()) {
-            return new String[0];
-        }
-        return searchQueries.split(",");
+    @PreUpdate
+    public void preUpdate() {
+        this.updatedAt = Instant.now();
     }
 }

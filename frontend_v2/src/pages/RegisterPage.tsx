@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-// import { IonIcon } from '@ionic/react';
-// import { logoGoogle } from 'ionicons/icons';
+import { IonIcon } from '@ionic/react';
+import { logoGoogle } from 'ionicons/icons';
 import { setStoredToken } from '../utils/auth';
 import { useNotification } from '../contexts/NotificationContext';
 
@@ -78,8 +78,6 @@ const RegisterPage: React.FC = () => {
     }
   };
 
-  // Google signup temporarily disabled
-  /*
   const handleGoogleSignup = () => {
     // Redirect to Spring Boot OAuth2 endpoint
     if (!process.env.REACT_APP_API_URL) {
@@ -90,7 +88,6 @@ const RegisterPage: React.FC = () => {
     console.log('Redirecting to Google OAuth:', redirectUrl);
     window.location.href = redirectUrl;
   };
-  */
 
   return (
     <div className="sm:flex">
@@ -101,7 +98,7 @@ const RegisterPage: React.FC = () => {
           {/* Logo */}
         <div className="flex justify-center mb-8">
           <div className="w-12 h-12 bg-black rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-2xl">U</span>
+            <span className="text-white font-bold text-2xl">உ</span>
           </div>
         </div>
 
@@ -226,8 +223,6 @@ const RegisterPage: React.FC = () => {
 
             </div>
 
-            {/* Google Signup temporarily disabled */}
-            {/* 
             <div className="text-center flex items-center gap-6"> 
               <hr className="flex-1 border-slate-200 dark:border-slate-800" /> 
               Or continue with  
@@ -243,7 +238,6 @@ const RegisterPage: React.FC = () => {
                 <IonIcon icon={logoGoogle} className="text-lg" /> Google  
               </button>
             </div>
-            */}
             
           </form>
 
@@ -259,7 +253,7 @@ const RegisterPage: React.FC = () => {
               <div className="absolute bottom-0 w-full uk-tr ansition-slide-bottom-small z-10">
                 <div className="max-w-xl w-full mx-auto pb-32 px-5 z-30 relative" uk-scrollspy="target: > *; cls: uk-animation-scale-up; delay: 100 ;repeat: true"> 
                   <div className="w-12 h-12 bg-black rounded-lg flex items-center justify-center">
-                    <span className="text-white font-bold text-lg">U</span>
+                    <span className="text-white font-bold text-lg">உ</span>
                   </div>
                   <h4 className="!text-white text-2xl font-semibold mt-7" uk-slideshow-parallax="y: 600,0,0">  Connect With Friends </h4> 
                   <p className="!text-white text-lg mt-7 leading-8" uk-slideshow-parallax="y: 800,0,0;"> Join millions of people sharing their moments and connecting with friends around the world.</p>   
@@ -272,7 +266,7 @@ const RegisterPage: React.FC = () => {
               <div className="absolute bottom-0 w-full uk-tr ansition-slide-bottom-small z-10">
                 <div className="max-w-xl w-full mx-auto pb-32 px-5 z-30 relative" uk-scrollspy="target: > *; cls: uk-animation-scale-up; delay: 100 ;repeat: true"> 
                   <div className="w-12 h-12 bg-black rounded-lg flex items-center justify-center">
-                    <span className="text-white font-bold text-lg">U</span>
+                    <span className="text-white font-bold text-lg">உ</span>
                   </div>
                   <h4 className="!text-white text-2xl font-semibold mt-7" uk-slideshow-parallax="y: 800,0,0">  Share Your Story </h4> 
                   <p className="!text-white text-lg mt-7 leading-8" uk-slideshow-parallax="y: 800,0,0;"> Create your profile, share your experiences, and discover what's happening around you.</p>   

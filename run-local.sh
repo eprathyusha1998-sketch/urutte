@@ -82,7 +82,7 @@ build_backend() {
     ./gradlew clean build -x test
     
     # Build Docker image with local configuration
-    docker build --platform linux/amd64 -t urutte-backend-local .
+    docker build --platform linux/arm64 -t urutte-backend-local .
     
     cd ..
     
@@ -108,7 +108,7 @@ build_frontend() {
     npm run build
     
     # Build Docker image with local URLs
-    docker build --platform linux/amd64 -f Dockerfile.local -t urutte-frontend-local .
+    docker build --platform linux/arm64 -f Dockerfile.local -t urutte-frontend-local .
     
     cd ..
     

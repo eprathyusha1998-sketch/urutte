@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-// import { IonIcon } from '@ionic/react';
-// import { logoGoogle } from 'ionicons/icons';
+import { IonIcon } from '@ionic/react';
+import { logoGoogle } from 'ionicons/icons';
 import { isAuthenticated, setStoredToken, removeStoredToken, isTokenExpired } from '../utils/auth';
 import { useNotification } from '../contexts/NotificationContext';
 
@@ -85,8 +85,6 @@ const LoginPage: React.FC = () => {
     }
   };
 
-  // Google login temporarily disabled
-  /*
   const handleGoogleLogin = () => {
     // Redirect to Spring Boot OAuth2 endpoint
     if (!API_BASE_URL) {
@@ -98,7 +96,6 @@ const LoginPage: React.FC = () => {
     console.log('Redirecting to Google OAuth:', redirectUrl);
     window.location.href = redirectUrl;
   };
-  */
 
   return (
     <div className="sm:flex">
@@ -109,7 +106,7 @@ const LoginPage: React.FC = () => {
           {/* Logo */}
         <div className="flex justify-center mb-8">
           <div className="w-12 h-12 bg-black rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-2xl">U</span>
+            <span className="text-white font-bold text-2xl">உ</span>
           </div>
         </div>
 
@@ -191,8 +188,6 @@ const LoginPage: React.FC = () => {
               </button>
             </div>
 
-            {/* Google Login temporarily disabled */}
-            {/* 
             <div className="text-center flex items-center gap-6"> 
               <hr className="flex-1 border-slate-200 dark:border-slate-800" /> 
               Or continue with  
@@ -208,7 +203,6 @@ const LoginPage: React.FC = () => {
                 <IonIcon icon={logoGoogle} className="text-lg" /> Google  
               </button>
             </div>
-            */}
             
           </form>
 
@@ -224,7 +218,7 @@ const LoginPage: React.FC = () => {
               <div className="absolute bottom-0 w-full uk-tr ansition-slide-bottom-small z-10">
                 <div className="max-w-xl w-full mx-auto pb-32 px-5 z-30 relative" uk-scrollspy="target: > *; cls: uk-animation-scale-up; delay: 100 ;repeat: true"> 
                   <div className="w-12 h-12 bg-black rounded-lg flex items-center justify-center">
-                    <span className="text-white font-bold text-lg">U</span>
+                    <span className="text-white font-bold text-lg">உ</span>
                   </div>
                   <h4 className="!text-white text-2xl font-semibold mt-7" uk-slideshow-parallax="y: 600,0,0">  Connect With Friends </h4> 
                   <p className="!text-white text-lg mt-7 leading-8" uk-slideshow-parallax="y: 800,0,0;"> This phrase is more casual and playful. It suggests that you are keeping your friends updated on what's happening in your life.</p>   
@@ -237,7 +231,7 @@ const LoginPage: React.FC = () => {
               <div className="absolute bottom-0 w-full uk-tr ansition-slide-bottom-small z-10">
                 <div className="max-w-xl w-full mx-auto pb-32 px-5 z-30 relative" uk-scrollspy="target: > *; cls: uk-animation-scale-up; delay: 100 ;repeat: true"> 
                   <div className="w-12 h-12 bg-black rounded-lg flex items-center justify-center">
-                    <span className="text-white font-bold text-lg">U</span>
+                    <span className="text-white font-bold text-lg">உ</span>
                   </div>
                   <h4 className="!text-white text-2xl font-semibold mt-7" uk-slideshow-parallax="y: 800,0,0">  Share Your Moments </h4> 
                   <p className="!text-white text-lg mt-7 leading-8" uk-slideshow-parallax="y: 800,0,0;"> Share your life moments with friends and family. Connect, engage, and build lasting relationships.</p>   

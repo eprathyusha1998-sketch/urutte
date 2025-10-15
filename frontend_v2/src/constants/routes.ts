@@ -9,6 +9,7 @@ export const ROUTES = {
   THREAD: '/thread',
   MESSAGES: '/messages',
   LIKES: '/likes',
+  MY_POSTS: '/mythread',
   NOTIFICATIONS: '/notifications',
   SETTINGS: '/settings'
 } as const;

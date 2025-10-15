@@ -88,15 +88,27 @@ const PostCard: React.FC<PostCardProps> = ({
   const [showOptions, setShowOptions] = useState(false);
 
   const formatTimeAgo = (timestamp: string) => {
-    const now = new Date();
-    const postTime = new Date(timestamp);
-    const diffInSeconds = Math.floor((now.getTime() - postTime.getTime()) / 1000);
+    try {
+      const now = new Date();
+      const postTime = new Date(timestamp);
+      
+      // Check if the date is valid
+      if (isNaN(postTime.getTime())) {
+        return 'unknown';
+      }
+      
+      const diffInSeconds = Math.floor((now.getTime() - postTime.getTime()) / 1000);
 
-    if (diffInSeconds < 60) return 'now';
-    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m`;
-    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h`;
-    if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 86400)}d`;
-    return postTime.toLocaleDateString();
+      if (diffInSeconds < 0) return 'now'; // Future date
+      if (diffInSeconds < 60) return 'now';
+      if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m`;
+      if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h`;
+      if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 86400)}d`;
+      return postTime.toLocaleDateString();
+    } catch (error) {
+      console.error('Error formatting time:', error);
+      return 'unknown';
+    }
   };
 
   const handlePostClick = () => {
@@ -231,7 +243,7 @@ const PostCard: React.FC<PostCardProps> = ({
           >
             <div className={`w-8 h-8 rounded-full ${getInitialsBackgroundColor(post.userName || '')} flex items-center justify-center`}>
               <span className="text-white text-sm font-semibold">
-                {generateInitials(post.userName || 'U')}
+                {generateInitials(post.userName || 'உ')}
               </span>
             </div>
           </div>
@@ -403,7 +415,7 @@ const PostCard: React.FC<PostCardProps> = ({
                 <div className="w-full h-full bg-gray-100 dark:bg-slate-600 flex items-center justify-center">
                   <div className={`w-5 h-5 rounded-full ${getInitialsBackgroundColor(post.quotedPost.userName || '')} flex items-center justify-center`}>
                     <span className="text-white text-xs font-semibold">
-                      {generateInitials(post.quotedPost.userName || 'U')}
+                      {generateInitials(post.quotedPost.userName || 'உ')}
                     </span>
                   </div>
                 </div>

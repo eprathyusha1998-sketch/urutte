@@ -9,7 +9,7 @@
  */
 export const generateInitials = (name: string): string => {
   if (!name || name.trim() === '') {
-    return 'U'; // Default fallback
+    return 'உ'; // Default fallback
   }
 
   const nameParts = name.trim().split(' ');

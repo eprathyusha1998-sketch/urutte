@@ -1,162 +1,115 @@
 package com.urutte.service;
 
 import com.urutte.model.Topic;
+import com.urutte.model.User;
+import com.urutte.model.UserTopic;
 import com.urutte.repository.TopicRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.urutte.repository.UserTopicRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
+@Transactional
 public class TopicService {
-    
-    private static final Logger logger = LoggerFactory.getLogger(TopicService.class);
     
     @Autowired
     private TopicRepository topicRepository;
     
+    @Autowired
+    private UserTopicRepository userTopicRepository;
+    
+    private static final int MAX_USER_TOPICS = 5;
+    
     /**
-     * Initialize default topics
+     * Get all available topics for a user (excluding already liked ones)
      */
-    public void initializeDefaultTopics() {
-        logger.info("Initializing default topics");
-        
-        // Check if topics already exist
-        if (topicRepository.countActiveTopics() > 0) {
-            logger.info("Topics already exist, skipping initialization");
-            return;
+    public List<Topic> getAvailableTopicsForUser(String userId) {
+        return topicRepository.findAvailableTopicsForUser(userId);
+    }
+    
+    /**
+     * Get random topics for suggestion (excluding already liked ones)
+     */
+    public List<Topic> getRandomTopicsForUser(String userId, int limit) {
+        List<Topic> availableTopics = getAvailableTopicsForUser(userId);
+        Collections.shuffle(availableTopics);
+        return availableTopics.stream().limit(limit).collect(Collectors.toList());
+    }
+    
+    /**
+     * Get user's liked topics
+     */
+    public List<Topic> getUserLikedTopics(String userId) {
+        return userTopicRepository.findLikedTopicsByUserId(userId);
+    }
+    
+    /**
+     * Like a topic for a user (maintain max 5 topics)
+     */
+    public boolean likeTopic(String userId, String topicId) {
+        // Check if user already likes this topic
+        Optional<UserTopic> existingUserTopic = userTopicRepository.findByUserIdAndTopicId(userId, topicId);
+        if (existingUserTopic.isPresent()) {
+            return false; // Already liked
         }
         
-        // Create default topics
-        createDefaultTopics();
+        // Check if topic exists and is active
+        Optional<Topic> topic = topicRepository.findById(topicId);
+        if (!topic.isPresent() || !topic.get().getIsActive()) {
+            return false; // Topic not found or inactive
+        }
         
-        logger.info("Default topics initialized successfully");
+        // Check if user has reached max topics limit
+        long currentTopicCount = userTopicRepository.countByUserId(userId);
+        if (currentTopicCount >= MAX_USER_TOPICS) {
+            // Remove the oldest topic
+            List<UserTopic> userTopics = userTopicRepository.findByUserIdOrderByCreatedAtAsc(userId);
+            if (!userTopics.isEmpty()) {
+                UserTopic oldestTopic = userTopics.get(0);
+                userTopicRepository.delete(oldestTopic);
+            }
+        }
+        
+        // Add new topic
+        User user = new User();
+        user.setId(userId);
+        UserTopic userTopic = new UserTopic(user, topic.get());
+        userTopicRepository.save(userTopic);
+        
+        return true;
     }
     
     /**
-     * Create default topics
+     * Unlike a topic for a user
      */
-    private void createDefaultTopics() {
-        // Technology topics
-        createTopic("Artificial Intelligence", "Latest developments in AI, machine learning, and automation", 
-                   "Technology", "ai,artificial intelligence,machine learning,automation,chatgpt,gpt,openai", 
-                   "artificial intelligence,machine learning,AI news,automation");
-        
-        createTopic("Web Development", "Frontend, backend, and full-stack development trends", 
-                   "Technology", "web development,frontend,backend,react,angular,vue,javascript,typescript", 
-                   "web development,frontend development,backend development,react,angular");
-        
-        createTopic("Mobile Development", "iOS, Android, and cross-platform mobile development", 
-                   "Technology", "mobile development,ios,android,react native,flutter,swift,kotlin", 
-                   "mobile development,iOS development,Android development,React Native,Flutter");
-        
-        createTopic("DevOps & Cloud", "DevOps practices, cloud computing, and infrastructure", 
-                   "Technology", "devops,cloud computing,aws,azure,gcp,docker,kubernetes,ci/cd", 
-                   "DevOps,cloud computing,AWS,Azure,Google Cloud,Docker,Kubernetes");
-        
-        createTopic("Cybersecurity", "Security threats, best practices, and protection strategies", 
-                   "Technology", "cybersecurity,security,hacking,privacy,encryption,malware", 
-                   "cybersecurity,information security,privacy,data protection");
-        
-        // Business topics
-        createTopic("Startups", "Startup news, funding, and entrepreneurship", 
-                   "Business", "startup,entrepreneurship,funding,venture capital,unicorn,ipo", 
-                   "startup news,entrepreneurship,venture capital,funding,IPO");
-        
-        createTopic("Cryptocurrency", "Bitcoin, blockchain, and digital currencies", 
-                   "Business", "cryptocurrency,bitcoin,ethereum,blockchain,defi,nft", 
-                   "cryptocurrency,Bitcoin,Ethereum,blockchain,DeFi,NFT");
-        
-        createTopic("E-commerce", "Online retail, marketplaces, and digital commerce", 
-                   "Business", "ecommerce,online retail,amazon,shopify,digital commerce", 
-                   "e-commerce,online retail,Amazon,Shopify,digital commerce");
-        
-        // Science topics
-        createTopic("Space & Astronomy", "Space exploration, astronomy, and cosmic discoveries", 
-                   "Science", "space,astronomy,nasa,spacex,planets,stars,universe", 
-                   "space exploration,astronomy,NASA,SpaceX,planets,stars");
-        
-        createTopic("Climate Change", "Environmental science, climate action, and sustainability", 
-                   "Science", "climate change,global warming,environment,sustainability,renewable energy", 
-                   "climate change,global warming,environment,sustainability,renewable energy");
-        
-        createTopic("Health & Medicine", "Medical breakthroughs, health research, and wellness", 
-                   "Science", "medicine,health,medical research,pharmaceuticals,wellness", 
-                   "medical research,health,medicine,pharmaceuticals,wellness");
-        
-        // Entertainment topics
-        createTopic("Gaming", "Video games, esports, and gaming industry", 
-                   "Entertainment", "gaming,video games,esports,playstation,xbox,nintendo", 
-                   "gaming,video games,esports,PlayStation,Xbox,Nintendo");
-        
-        createTopic("Movies & TV", "Film industry, streaming, and entertainment", 
-                   "Entertainment", "movies,tv shows,netflix,disney,hollywood,streaming", 
-                   "movies,TV shows,Netflix,Disney,Hollywood,streaming");
-        
-        createTopic("Music", "Music industry, artists, and streaming platforms", 
-                   "Entertainment", "music,spotify,apple music,artists,concerts,albums", 
-                   "music,Spotify,Apple Music,artists,concerts,albums");
-        
-        // Lifestyle topics
-        createTopic("Fitness & Health", "Exercise, nutrition, and healthy living", 
-                   "Lifestyle", "fitness,health,nutrition,exercise,workout,wellness", 
-                   "fitness,health,nutrition,exercise,workout,wellness");
-        
-        createTopic("Travel", "Travel destinations, tips, and tourism", 
-                   "Lifestyle", "travel,tourism,vacation,destinations,hotels,flights", 
-                   "travel,tourism,vacation,destinations,hotels,flights");
-        
-        createTopic("Food & Cooking", "Culinary trends, recipes, and food culture", 
-                   "Lifestyle", "food,cooking,recipes,restaurants,culinary,chef", 
-                   "food,cooking,recipes,restaurants,culinary,chef");
-        
-        // Education topics
-        createTopic("Online Learning", "E-learning, courses, and educational technology", 
-                   "Education", "online learning,education,courses,mooc,edtech,learning", 
-                   "online learning,education,courses,MOOC,edtech,learning");
-        
-        createTopic("Programming", "Coding tutorials, programming languages, and software development", 
-                   "Education", "programming,coding,software development,tutorials,algorithms", 
-                   "programming,coding,software development,tutorials,algorithms");
-        
-        // Social topics
-        createTopic("Social Media", "Platform updates, trends, and social networking", 
-                   "Social", "social media,facebook,twitter,instagram,linkedin,tiktok", 
-                   "social media,Facebook,Twitter,Instagram,LinkedIn,TikTok");
-        
-        createTopic("Remote Work", "Work from home, digital nomads, and remote collaboration", 
-                   "Social", "remote work,work from home,digital nomads,telecommuting", 
-                   "remote work,work from home,digital nomads,telecommuting");
+    public boolean unlikeTopic(String userId, String topicId) {
+        Optional<UserTopic> userTopic = userTopicRepository.findByUserIdAndTopicId(userId, topicId);
+        if (userTopic.isPresent()) {
+            userTopicRepository.delete(userTopic.get());
+            return true;
+        }
+        return false;
     }
     
     /**
-     * Create a topic
+     * Check if user likes a topic
      */
-    public Topic createTopic(String name, String description, String category, 
-                           String keywords, String searchQueries) {
-        Topic topic = new Topic(name, description, category, keywords, searchQueries);
-        topic = topicRepository.save(topic);
-        
-        logger.info("Created topic: {}", topic.getName());
-        return topic;
+    public boolean isTopicLikedByUser(String userId, String topicId) {
+        return userTopicRepository.findByUserIdAndTopicId(userId, topicId).isPresent();
     }
     
     /**
-     * Get all active topics
+     * Get all active topics (for admin purposes)
      */
     public List<Topic> getAllActiveTopics() {
-        return topicRepository.findByIsActiveTrueOrderByPriorityDesc();
-    }
-    
-    /**
-     * Get topics by category
-     */
-    public List<Topic> getTopicsByCategory(String category) {
-        return topicRepository.findByCategoryAndIsActiveTrue(category);
+        return topicRepository.findByIsActiveTrue();
     }
     
     /**
@@ -167,6 +120,57 @@ public class TopicService {
     }
     
     /**
+     * Get topics by category
+     */
+    public List<Topic> getTopicsByCategory(String category) {
+        return topicRepository.findByCategory(category);
+    }
+    
+    /**
+     * Search topics
+     */
+    public List<Topic> searchTopics(String query) {
+        return topicRepository.searchTopics(query);
+    }
+    
+    /**
+     * Create a new topic
+     */
+    public Topic createTopic(String name, String description, String aiPrompt, String category, String keywords) {
+        Topic topic = new Topic(name, description, aiPrompt, category, keywords);
+        return topicRepository.save(topic);
+    }
+    
+    /**
+     * Update a topic
+     */
+    public Topic updateTopic(String id, String name, String description, String aiPrompt, String category, String keywords, Integer priority, Integer threadsPerRun) {
+        Topic topic = topicRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Topic not found"));
+        
+        topic.setName(name);
+        topic.setDescription(description);
+        topic.setAiPrompt(aiPrompt);
+        topic.setCategory(category);
+        topic.setKeywords(keywords);
+        topic.setPriority(priority);
+        topic.setThreadsPerRun(threadsPerRun);
+        
+        return topicRepository.save(topic);
+    }
+    
+    /**
+     * Toggle topic status
+     */
+    public Topic toggleTopicStatus(String id) {
+        Topic topic = topicRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Topic not found"));
+        
+        topic.setIsActive(!topic.getIsActive());
+        return topicRepository.save(topic);
+    }
+    
+    /**
      * Get topic by ID
      */
     public Optional<Topic> getTopicById(String id) {
@@ -174,139 +178,76 @@ public class TopicService {
     }
     
     /**
-     * Update topic
-     */
-    public Topic updateTopic(String id, String name, String description, String category, 
-                           String keywords, String searchQueries, Integer priority, Integer threadsPerRun) {
-        Optional<Topic> topicOpt = topicRepository.findById(id);
-        
-        if (topicOpt.isEmpty()) {
-            throw new IllegalArgumentException("Topic not found with id: " + id);
-        }
-        
-        Topic topic = topicOpt.get();
-        topic.setName(name);
-        topic.setDescription(description);
-        topic.setCategory(category);
-        topic.setKeywords(keywords);
-        topic.setSearchQueries(searchQueries);
-        topic.setPriority(priority);
-        topic.setThreadsPerRun(threadsPerRun);
-        
-        topic = topicRepository.save(topic);
-        logger.info("Updated topic: {}", topic.getName());
-        
-        return topic;
-    }
-    
-    /**
-     * Toggle topic status
-     */
-    public Topic toggleTopicStatus(String id) {
-        Optional<Topic> topicOpt = topicRepository.findById(id);
-        
-        if (topicOpt.isEmpty()) {
-            throw new IllegalArgumentException("Topic not found with id: " + id);
-        }
-        
-        Topic topic = topicOpt.get();
-        topic.setIsActive(!topic.getIsActive());
-        
-        topic = topicRepository.save(topic);
-        logger.info("Toggled topic status: {} (active: {})", topic.getName(), topic.getIsActive());
-        
-        return topic;
-    }
-    
-    /**
-     * Delete topic
-     */
-    public void deleteTopic(String id) {
-        Optional<Topic> topicOpt = topicRepository.findById(id);
-        
-        if (topicOpt.isEmpty()) {
-            throw new IllegalArgumentException("Topic not found with id: " + id);
-        }
-        
-        Topic topic = topicOpt.get();
-        topicRepository.delete(topic);
-        
-        logger.info("Deleted topic: {}", topic.getName());
-    }
-    
-    /**
-     * Search topics
-     */
-    public List<Topic> searchTopics(String query) {
-        return topicRepository.findByNameContainingIgnoreCaseAndIsActiveTrue(query);
-    }
-    
-    /**
-     * Get topic statistics
+     * Get topic stats
      */
     public TopicStats getTopicStats(String id) {
-        Optional<Topic> topicOpt = topicRepository.findById(id);
+        Topic topic = topicRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Topic not found"));
         
-        if (topicOpt.isEmpty()) {
-            throw new IllegalArgumentException("Topic not found with id: " + id);
-        }
-        
-        Topic topic = topicOpt.get();
-        
-        TopicStats stats = new TopicStats();
-        stats.setId(topic.getId());
-        stats.setName(topic.getName());
-        stats.setCategory(topic.getCategory());
-        stats.setIsActive(topic.getIsActive());
-        stats.setPriority(topic.getPriority());
-        stats.setThreadsPerRun(topic.getThreadsPerRun());
-        stats.setTotalThreadsGenerated(topic.getTotalThreadsGenerated());
-        stats.setLastGeneratedAt(topic.getLastGeneratedAt());
-        stats.setCreatedAt(topic.getCreatedAt());
-        
-        return stats;
+        return new TopicStats(
+            Long.parseLong(topic.getId()),
+            topic.getName(),
+            topic.getThreadsGenerated(),
+            topic.getLastGeneratedAt(),
+            topic.getIsActive()
+        );
     }
     
     /**
-     * Topic statistics data class
+     * TopicStats inner class
      */
     public static class TopicStats {
-        private String id;
+        private Long id;
         private String name;
-        private String category;
+        private Integer threadsGenerated;
+        private java.time.LocalDateTime lastGeneratedAt;
         private Boolean isActive;
-        private Integer priority;
-        private Integer threadsPerRun;
-        private Integer totalThreadsGenerated;
-        private LocalDateTime lastGeneratedAt;
-        private LocalDateTime createdAt;
         
-        // Getters and setters
-        public String getId() { return id; }
-        public void setId(String id) { this.id = id; }
+        public TopicStats(Long id, String name, Integer threadsGenerated, java.time.LocalDateTime lastGeneratedAt, Boolean isActive) {
+            this.id = id;
+            this.name = name;
+            this.threadsGenerated = threadsGenerated;
+            this.lastGeneratedAt = lastGeneratedAt;
+            this.isActive = isActive;
+        }
         
+        // Getters
+        public Long getId() { return id; }
         public String getName() { return name; }
-        public void setName(String name) { this.name = name; }
-        
-        public String getCategory() { return category; }
-        public void setCategory(String category) { this.category = category; }
-        
+        public Integer getThreadsGenerated() { return threadsGenerated; }
+        public java.time.LocalDateTime getLastGeneratedAt() { return lastGeneratedAt; }
         public Boolean getIsActive() { return isActive; }
-        public void setIsActive(Boolean isActive) { this.isActive = isActive; }
+    }
+    
+    /**
+     * Initialize default topics if they don't exist
+     */
+    public void initializeDefaultTopics() {
+        String[][] defaultTopics = {
+            {"Stock Market", "Latest updates on AMD, NVIDIA, Apple, Meta, SOFI, NBIS, HIMS and top stock market news including Fed meetings", "Generate content about stock market trends, earnings reports, and financial news focusing on AMD, NVIDIA, Apple, Meta, SOFI, NBIS, HIMS and Federal Reserve meetings", "Finance", "AMD,NVIDIA,Apple,Meta,SOFI,NBIS,HIMS,stock market,earnings,Fed meetings"},
+            {"Sports", "Cricket, football, basketball and other sports news and updates", "Generate content about sports news, match results, player updates, and analysis covering cricket, football, basketball and other major sports", "Sports", "cricket,football,basketball,sports news,match results,player updates"},
+            {"US Top News", "Latest breaking news and important updates from the United States", "Generate content about top US news, political developments, social issues, and major events happening in the United States", "News", "US news,politics,social issues,breaking news"},
+            {"Tamil Nadu India News", "Latest news and updates from Tamil Nadu, India", "Generate content about Tamil Nadu politics, development, culture, and important news from the state", "Regional", "Tamil Nadu,politics,development,culture,India"},
+            {"India Top News", "Latest national news and updates from India", "Generate content about Indian politics, economy, social issues, and major national developments", "News", "India,politics,economy,social issues,national news"},
+            {"World Cinema", "Latest updates from global cinema, movies, and entertainment industry", "Generate content about new movie releases, film industry news, celebrity updates, and entertainment trends worldwide", "Entertainment", "movies,cinema,entertainment,celebrity,film industry"},
+            {"White House", "Updates on Trump, Senate, Congress and US political developments", "Generate content about US political developments, White House news, Trump updates, Senate proceedings, and Congressional activities", "Politics", "Trump,Senate,Congress,White House,US politics"},
+            {"AI Innovation", "Latest developments in artificial intelligence and technology innovation", "Generate content about AI breakthroughs, tech innovations, machine learning developments, and emerging technologies", "Technology", "AI,artificial intelligence,technology,innovation,machine learning"},
+            {"TVK Tamil Politics", "Updates on Tamil politics and TVK party developments", "Generate content about Tamil political developments, TVK party news, and Tamil political landscape", "Politics", "TVK,Tamil politics,political developments"},
+            {"Top US News", "Breaking news and important updates from across the United States", "Generate content about major US news stories, political developments, and significant events across the country", "News", "US news,breaking news,political developments"}
+        };
         
-        public Integer getPriority() { return priority; }
-        public void setPriority(Integer priority) { this.priority = priority; }
-        
-        public Integer getThreadsPerRun() { return threadsPerRun; }
-        public void setThreadsPerRun(Integer threadsPerRun) { this.threadsPerRun = threadsPerRun; }
-        
-        public Integer getTotalThreadsGenerated() { return totalThreadsGenerated; }
-        public void setTotalThreadsGenerated(Integer totalThreadsGenerated) { this.totalThreadsGenerated = totalThreadsGenerated; }
-        
-        public LocalDateTime getLastGeneratedAt() { return lastGeneratedAt; }
-        public void setLastGeneratedAt(LocalDateTime lastGeneratedAt) { this.lastGeneratedAt = lastGeneratedAt; }
-        
-        public LocalDateTime getCreatedAt() { return createdAt; }
-        public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+        for (String[] topicData : defaultTopics) {
+            String name = topicData[0];
+            String description = topicData[1];
+            String aiPrompt = topicData[2];
+            String category = topicData[3];
+            String keywords = topicData[4];
+            
+            Optional<Topic> existingTopic = topicRepository.findByName(name);
+            if (!existingTopic.isPresent()) {
+                Topic topic = new Topic(name, description, aiPrompt, category, keywords);
+                topicRepository.save(topic);
+            }
+        }
     }
 }

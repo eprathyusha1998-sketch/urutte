@@ -254,7 +254,7 @@ const ThreadPage: React.FC = () => {
                   <div className="w-6 h-6 rounded-full bg-gray-100 dark:bg-slate-600 flex items-center justify-center">
                     <div className={`w-5 h-5 rounded-full ${getInitialsBackgroundColor(repostingPost.userName || '')} flex items-center justify-center`}>
                       <span className="text-white text-xs font-semibold">
-                        {generateInitials(repostingPost.userName || 'U')}
+                        {generateInitials(repostingPost.userName || 'உ')}
                       </span>
                     </div>
                   </div>

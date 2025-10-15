@@ -130,24 +130,8 @@ public class UserService {
             user.setName(oidcUser.getFullName());
             user.setEmail(oidcUser.getEmail());
             
-            // Download and store profile picture if it's an external URL
-            String pictureUrl = oidcUser.getPicture();
-            if (pictureUrl != null && (pictureUrl.startsWith("http://") || pictureUrl.startsWith("https://"))) {
-                try {
-                    String localPicturePath = profilePictureService.downloadAndStoreProfilePicture(pictureUrl, userId);
-                    if (localPicturePath != null) {
-                        user.setPicture("/" + localPicturePath);
-                    } else {
-                        // Fallback to default avatar
-                        user.setPicture(profilePictureService.generateDefaultAvatar(userId));
-                    }
-                } catch (Exception e) {
-                    // Fallback to default avatar if download fails
-                    user.setPicture(profilePictureService.generateDefaultAvatar(userId));
-                }
-            } else {
-                user.setPicture(pictureUrl);
-            }
+            // Use default avatar instead of downloading Google profile picture
+            user.setPicture(profilePictureService.generateDefaultAvatar(userId));
             
             return userRepository.save(user);
         } else {
@@ -157,24 +141,8 @@ public class UserService {
             newUser.setName(oidcUser.getFullName());
             newUser.setEmail(oidcUser.getEmail());
             
-            // Download and store profile picture if it's an external URL
-            String pictureUrl = oidcUser.getPicture();
-            if (pictureUrl != null && (pictureUrl.startsWith("http://") || pictureUrl.startsWith("https://"))) {
-                try {
-                    String localPicturePath = profilePictureService.downloadAndStoreProfilePicture(pictureUrl, userId);
-                    if (localPicturePath != null) {
-                        newUser.setPicture("/" + localPicturePath);
-                    } else {
-                        // Fallback to default avatar
-                        newUser.setPicture(profilePictureService.generateDefaultAvatar(userId));
-                    }
-                } catch (Exception e) {
-                    // Fallback to default avatar if download fails
-                    newUser.setPicture(profilePictureService.generateDefaultAvatar(userId));
-                }
-            } else {
-                newUser.setPicture(pictureUrl);
-            }
+            // Use default avatar instead of downloading Google profile picture
+            newUser.setPicture(profilePictureService.generateDefaultAvatar(userId));
             
             return userRepository.save(newUser);
         }

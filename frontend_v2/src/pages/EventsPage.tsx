@@ -470,7 +470,7 @@ const EventsPage: React.FC = () => {
                       <div className="w-6 h-6 rounded-full mr-2 bg-gray-100 dark:bg-slate-600 flex items-center justify-center">
                         <div className={`w-5 h-5 rounded-full ${getInitialsBackgroundColor(event.organizer.name || '')} flex items-center justify-center`}>
                           <span className="text-white text-xs font-semibold">
-                            {generateInitials(event.organizer.name || 'U')}
+                            {generateInitials(event.organizer.name || 'உ')}
                           </span>
                         </div>
                       </div>
