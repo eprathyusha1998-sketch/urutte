@@ -11,8 +11,7 @@ import java.util.List;
 public class Topic {
     
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private String id;
     
     @Column(nullable = false, unique = true)
     private String name;
@@ -23,25 +22,25 @@ public class Topic {
     @Column(nullable = false)
     private String category;
     
-    @Column(nullable = false)
+    @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
     
     @Column(nullable = false)
     private Integer priority = 1; // 1-10, higher number = higher priority
     
-    @Column(nullable = false)
+    @Column(name = "threads_per_run", nullable = false)
     private Integer threadsPerRun = 3; // Number of threads to generate per run
     
     @Column(columnDefinition = "TEXT")
     private String keywords; // Comma-separated keywords for content generation
     
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "search_queries", columnDefinition = "TEXT")
     private String searchQueries; // Comma-separated search queries
     
-    @Column(nullable = false)
+    @Column(name = "last_generated_at", nullable = false)
     private LocalDateTime lastGeneratedAt;
     
-    @Column(nullable = false)
+    @Column(name = "total_threads_generated", nullable = false)
     private Integer totalThreadsGenerated = 0;
     
     @CreationTimestamp
@@ -54,6 +53,20 @@ public class Topic {
     
     // Constructors
     public Topic() {}
+    
+    public Topic(String id, String name, String description, String category, String keywords, String searchQueries) {
+        this.id = id;
+        this.name = name;
+        this.description = description;
+        this.category = category;
+        this.keywords = keywords;
+        this.searchQueries = searchQueries;
+        this.isActive = true;
+        this.priority = 1;
+        this.threadsPerRun = 3;
+        this.totalThreadsGenerated = 0;
+        this.lastGeneratedAt = LocalDateTime.now().minusHours(24); // Start with old timestamp
+    }
     
     public Topic(String name, String description, String category, String keywords, String searchQueries) {
         this.name = name;
@@ -69,8 +82,8 @@ public class Topic {
     }
     
     // Getters and Setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
     
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }

@@ -467,8 +467,11 @@ public class ThreadService {
             hashtag.incrementUsageCount();
             hashtagRepository.save(hashtag);
             
-            ThreadHashtag threadHashtag = new ThreadHashtag(thread, hashtag);
-            threadHashtagRepository.save(threadHashtag);
+            // Only create the relationship if it doesn't already exist
+            if (!threadHashtagRepository.existsByThreadAndHashtag(thread, hashtag)) {
+                ThreadHashtag threadHashtag = new ThreadHashtag(thread, hashtag);
+                threadHashtagRepository.save(threadHashtag);
+            }
         }
         
         // Process mentions

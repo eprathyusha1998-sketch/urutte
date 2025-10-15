@@ -22,4 +22,7 @@ public interface ThreadHashtagRepository extends JpaRepository<ThreadHashtag, Lo
     
     // Count threads with a hashtag
     long countByHashtag(Hashtag hashtag);
+    
+    // Check if a thread-hashtag relationship already exists
+    boolean existsByThreadAndHashtag(Thread thread, Hashtag hashtag);
 }

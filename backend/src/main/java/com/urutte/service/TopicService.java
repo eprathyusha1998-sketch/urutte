@@ -169,14 +169,14 @@ public class TopicService {
     /**
      * Get topic by ID
      */
-    public Optional<Topic> getTopicById(Long id) {
+    public Optional<Topic> getTopicById(String id) {
         return topicRepository.findById(id);
     }
     
     /**
      * Update topic
      */
-    public Topic updateTopic(Long id, String name, String description, String category, 
+    public Topic updateTopic(String id, String name, String description, String category, 
                            String keywords, String searchQueries, Integer priority, Integer threadsPerRun) {
         Optional<Topic> topicOpt = topicRepository.findById(id);
         
@@ -202,7 +202,7 @@ public class TopicService {
     /**
      * Toggle topic status
      */
-    public Topic toggleTopicStatus(Long id) {
+    public Topic toggleTopicStatus(String id) {
         Optional<Topic> topicOpt = topicRepository.findById(id);
         
         if (topicOpt.isEmpty()) {
@@ -221,7 +221,7 @@ public class TopicService {
     /**
      * Delete topic
      */
-    public void deleteTopic(Long id) {
+    public void deleteTopic(String id) {
         Optional<Topic> topicOpt = topicRepository.findById(id);
         
         if (topicOpt.isEmpty()) {
@@ -244,7 +244,7 @@ public class TopicService {
     /**
      * Get topic statistics
      */
-    public TopicStats getTopicStats(Long id) {
+    public TopicStats getTopicStats(String id) {
         Optional<Topic> topicOpt = topicRepository.findById(id);
         
         if (topicOpt.isEmpty()) {
@@ -271,7 +271,7 @@ public class TopicService {
      * Topic statistics data class
      */
     public static class TopicStats {
-        private Long id;
+        private String id;
         private String name;
         private String category;
         private Boolean isActive;
@@ -282,8 +282,8 @@ public class TopicService {
         private LocalDateTime createdAt;
         
         // Getters and setters
-        public Long getId() { return id; }
-        public void setId(Long id) { this.id = id; }
+        public String getId() { return id; }
+        public void setId(String id) { this.id = id; }
         
         public String getName() { return name; }
         public void setName(String name) { this.name = name; }

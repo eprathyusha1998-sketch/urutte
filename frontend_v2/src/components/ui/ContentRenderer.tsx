@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DYNAMIC_ROUTES } from '../../constants';
+import { renderEnhancedContent } from '../../utils/contentUtils';
 
 export interface ContentRendererProps {
   content: string;
@@ -14,41 +15,11 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({
   const navigate = useNavigate();
   
   const renderContent = (text: string) => {
-    if (!text) return '';
-    
-    // Split content by hashtags and mentions, preserving the delimiters
-    const parts = text.split(/(#\w+|@\w+)/g);
-    
-    return parts.map((part, index) => {
-      if (part.startsWith('#')) {
-        return (
-          <span 
-            key={index} 
-            className="text-blue-600 dark:text-blue-400 font-medium hover:underline cursor-pointer"
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(DYNAMIC_ROUTES.HASHTAG(part.substring(1)));
-            }}
-          >
-            {part}
-          </span>
-        );
-      } else if (part.startsWith('@')) {
-        return (
-          <span 
-            key={index} 
-            className="text-blue-600 dark:text-blue-400 font-medium hover:underline cursor-pointer"
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(DYNAMIC_ROUTES.PROFILE_BY_USERNAME(part.substring(1)));
-            }}
-          >
-            {part}
-          </span>
-        );
-      }
-      return part;
-    });
+    return renderEnhancedContent(
+      text,
+      (hashtag) => navigate(DYNAMIC_ROUTES.HASHTAG(hashtag)),
+      (mention) => navigate(DYNAMIC_ROUTES.PROFILE_BY_USERNAME(mention))
+    );
   };
   
   return (

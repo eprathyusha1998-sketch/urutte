@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
-public interface TopicRepository extends JpaRepository<Topic, Long> {
+public interface TopicRepository extends JpaRepository<Topic, String> {
     
     List<Topic> findByIsActiveTrueOrderByPriorityDesc();
     

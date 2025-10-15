@@ -122,7 +122,7 @@ public class AiContentController {
     }
     
     @PutMapping("/topics/{id}")
-    public ResponseEntity<Topic> updateTopic(@PathVariable Long id, @RequestBody UpdateTopicRequest request) {
+    public ResponseEntity<Topic> updateTopic(@PathVariable String id, @RequestBody UpdateTopicRequest request) {
         try {
             Topic topic = topicService.updateTopic(
                 id,
@@ -141,7 +141,7 @@ public class AiContentController {
     }
     
     @PostMapping("/topics/{id}/toggle")
-    public ResponseEntity<Topic> toggleTopicStatus(@PathVariable Long id) {
+    public ResponseEntity<Topic> toggleTopicStatus(@PathVariable String id) {
         try {
             Topic topic = topicService.toggleTopicStatus(id);
             return ResponseEntity.ok(topic);
@@ -151,7 +151,7 @@ public class AiContentController {
     }
     
     @GetMapping("/topics/{id}/stats")
-    public ResponseEntity<TopicService.TopicStats> getTopicStats(@PathVariable Long id) {
+    public ResponseEntity<TopicService.TopicStats> getTopicStats(@PathVariable String id) {
         try {
             return ResponseEntity.ok(topicService.getTopicStats(id));
         } catch (IllegalArgumentException e) {
@@ -178,7 +178,7 @@ public class AiContentController {
     }
     
     @PostMapping("/generate/topic/{id}")
-    public ResponseEntity<Map<String, String>> generateContentForTopic(@PathVariable Long id) {
+    public ResponseEntity<Map<String, String>> generateContentForTopic(@PathVariable String id) {
         try {
             aiAdminService.getActiveAiAdmin().ifPresent(aiAdmin -> {
                 topicService.getTopicById(id).ifPresent(topic -> {
@@ -211,6 +211,30 @@ public class AiContentController {
         } catch (Exception e) {
             Map<String, String> response = new HashMap<>();
             response.put("message", "Error initializing system: " + e.getMessage());
+            response.put("status", "error");
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
+    
+    @PostMapping("/set-ai-password")
+    public ResponseEntity<Map<String, String>> setAiAssistantPassword(@RequestBody Map<String, String> request) {
+        try {
+            String password = request.get("password");
+            if (password == null || password.trim().isEmpty()) {
+                password = "ai_assistant_2024"; // Default password
+            }
+            
+            aiAdminService.setAiAssistantPassword(password);
+            
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "AI Assistant password set successfully");
+            response.put("status", "success");
+            response.put("email", "ai@urutte.com");
+            response.put("password", password);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Error setting AI Assistant password: " + e.getMessage());
             response.put("status", "error");
             return ResponseEntity.internalServerError().body(response);
         }

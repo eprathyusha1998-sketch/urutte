@@ -106,38 +106,67 @@ const PostCard: React.FC<PostCardProps> = ({
   const renderContentWithHashtags = (content: string) => {
     if (!content) return '';
     
-    // Split content by hashtags and mentions, preserving the delimiters
-    const parts = content.split(/(#\w+|@\w+)/g);
+    // Enhanced regex to match URLs, hashtags, and mentions
+    // URL regex: matches http/https URLs and www. URLs
+    const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+)/g;
+    const hashtagMentionRegex = /(#\w+|@\w+)/g;
     
-    return parts.map((part, index) => {
-      if (part.startsWith('#')) {
+    // First split by URLs, then by hashtags/mentions
+    const urlParts = content.split(urlRegex);
+    
+    return urlParts.map((urlPart, urlIndex) => {
+      // Check if this part is a URL
+      if (urlRegex.test(urlPart)) {
+        // Ensure the URL has a protocol
+        const fullUrl = urlPart.startsWith('http') ? urlPart : `https://${urlPart}`;
+        
         return (
-          <span 
-            key={index} 
-            className="text-blue-600 dark:text-blue-400 font-medium hover:underline cursor-pointer"
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(`/hashtag/${part.substring(1)}`);
-            }}
+          <a
+            key={`url-${urlIndex}`}
+            href={fullUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 dark:text-blue-400 hover:underline cursor-pointer break-all"
+            onClick={(e) => e.stopPropagation()}
           >
-            {part}
-          </span>
-        );
-      } else if (part.startsWith('@')) {
-        return (
-          <span 
-            key={index} 
-            className="text-blue-600 dark:text-blue-400 font-medium hover:underline cursor-pointer"
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(`/profile/${part.substring(1)}`);
-            }}
-          >
-            {part}
-          </span>
+            {urlPart}
+          </a>
         );
       }
-      return part;
+      
+      // For non-URL parts, split by hashtags and mentions
+      const parts = urlPart.split(hashtagMentionRegex);
+      
+      return parts.map((part, index) => {
+        if (part.startsWith('#')) {
+          return (
+            <span 
+              key={`hashtag-${urlIndex}-${index}`} 
+              className="text-blue-600 dark:text-blue-400 font-medium hover:underline cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/hashtag/${part.substring(1)}`);
+              }}
+            >
+              {part}
+            </span>
+          );
+        } else if (part.startsWith('@')) {
+          return (
+            <span 
+              key={`mention-${urlIndex}-${index}`} 
+              className="text-blue-600 dark:text-blue-400 font-medium hover:underline cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/profile/${part.substring(1)}`);
+              }}
+            >
+              {part}
+            </span>
+          );
+        }
+        return part;
+      });
     });
   };
 

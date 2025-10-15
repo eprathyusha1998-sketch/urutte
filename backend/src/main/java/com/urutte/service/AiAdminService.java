@@ -1,10 +1,14 @@
 package com.urutte.service;
 
 import com.urutte.model.AiAdmin;
+import com.urutte.model.User;
 import com.urutte.repository.AiAdminRepository;
+import com.urutte.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -18,6 +22,15 @@ public class AiAdminService {
     @Autowired
     private AiAdminRepository aiAdminRepository;
     
+    @Autowired
+    private UserRepository userRepository;
+    
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+    
+    @Value("${app.frontend.url:http://localhost:3000}")
+    private String frontendUrl;
+    
     /**
      * Ensure AI Admin exists, create if not
      */
@@ -29,6 +42,55 @@ public class AiAdminService {
             createDefaultAiAdmin();
         } else {
             logger.debug("AI Admin already exists: {}", existingAdmin.get().getName());
+            // Update avatar URL if it's using localhost
+            updateAiAdminAvatarIfNeeded(existingAdmin.get());
+        }
+        
+        // Ensure AI Assistant has a password for login
+        ensureAiAssistantHasPassword();
+    }
+    
+    /**
+     * Update AI Admin avatar URL if it's using localhost
+     */
+    private void updateAiAdminAvatarIfNeeded(AiAdmin aiAdmin) {
+        if (aiAdmin.getAvatarUrl() != null && aiAdmin.getAvatarUrl().contains("localhost")) {
+            String newAvatarUrl = frontendUrl + "/assets/images/avatars/avatar-1.jpg?v=" + System.currentTimeMillis();
+            aiAdmin.setAvatarUrl(newAvatarUrl);
+            aiAdminRepository.save(aiAdmin);
+            logger.info("Updated AI Admin avatar URL from localhost to: {}", newAvatarUrl);
+        }
+    }
+    
+    /**
+     * Set password for AI Assistant user to enable email/password login
+     */
+    public void setAiAssistantPassword(String password) {
+        Optional<User> aiUser = userRepository.findByEmail("ai@urutte.com");
+        if (aiUser.isPresent()) {
+            User user = aiUser.get();
+            user.setPassword(passwordEncoder.encode(password));
+            userRepository.save(user);
+            logger.info("Set password for AI Assistant user: {}", user.getEmail());
+        } else {
+            logger.warn("AI Assistant user not found with email: ai@urutte.com");
+        }
+    }
+    
+    /**
+     * Ensure AI Assistant has a password set for login
+     */
+    public void ensureAiAssistantHasPassword() {
+        Optional<User> aiUser = userRepository.findByEmail("ai@urutte.com");
+        if (aiUser.isPresent()) {
+            User user = aiUser.get();
+            if (user.getPassword() == null || user.getPassword().isEmpty()) {
+                // Set default password for AI Assistant
+                String defaultPassword = "ai_assistant_2024";
+                user.setPassword(passwordEncoder.encode(defaultPassword));
+                userRepository.save(user);
+                logger.info("Set default password for AI Assistant user: {}", user.getEmail());
+            }
         }
     }
     
@@ -36,16 +98,19 @@ public class AiAdminService {
      * Create default AI Admin
      */
     public AiAdmin createDefaultAiAdmin() {
+        // Use the configured frontend URL for the avatar
+        String avatarUrl = frontendUrl + "/assets/images/avatars/avatar-1.jpg?v=" + System.currentTimeMillis();
+        
         AiAdmin aiAdmin = new AiAdmin(
             "AI Assistant",
             "ai_assistant",
             "ai@urutte.com",
             "🤖 AI-powered content curator bringing you the latest trends and discussions from across the web. Always learning, always sharing!",
-            "http://localhost/assets/images/avatars/avatar-1.jpg?v=" + System.currentTimeMillis()
+            avatarUrl
         );
         
         aiAdmin = aiAdminRepository.save(aiAdmin);
-        logger.info("Created default AI Admin: {}", aiAdmin.getName());
+        logger.info("Created default AI Admin: {} with avatar URL: {}", aiAdmin.getName(), avatarUrl);
         
         return aiAdmin;
     }
