@@ -70,10 +70,10 @@ public class SecurityConfig {
             .oauth2Login(oauth2 -> oauth2
                 .loginPage("/oauth2/authorization/google")
                 .successHandler(oAuth2LoginSuccessHandler)
-                .failureUrl(frontendUrl + "/login?error=true")
+                .failureUrl(frontendUrl + "/?error=true")
             )
             .logout(logout -> logout
-                .logoutSuccessUrl(frontendUrl + "/login")
+                .logoutSuccessUrl(frontendUrl + "/")
                 .invalidateHttpSession(true)
                 .clearAuthentication(true)
             );

@@ -307,7 +307,7 @@ const ThreadPage: React.FC = () => {
                 disabled={!quoteContent.trim()}
                 className="flex-1 bg-black text-white dark:bg-white dark:text-black py-2 px-4 rounded-full text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors"
               >
-                Quote Repost
+                Urutte Urutte!
               </button>
             </div>
           </div>

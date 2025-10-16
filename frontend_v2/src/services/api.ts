@@ -1,10 +1,10 @@
 import axios from 'axios';
 import { getAuthHeaders, removeStoredToken } from '../utils/auth';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL;
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
 
-if (!API_BASE_URL) {
-  console.error('REACT_APP_API_URL is not defined. Please check your environment configuration.');
+if (!process.env.REACT_APP_API_URL) {
+  console.warn('REACT_APP_API_URL is not defined. Using default: http://localhost:8080/api');
 }
 
 // Create axios instance with default config
@@ -59,19 +59,14 @@ export const authApi = {
     return response.data;
   },
   
-  login: (email: string, password: string) => {
-    // Google OAuth temporarily disabled
-    console.warn('Google OAuth login is temporarily disabled');
-    return;
-    
-    /* 
-    // For OAuth, we'll redirect to the OAuth endpoint
-    if (!API_BASE_URL) {
-      console.error('API_BASE_URL is not defined. Cannot redirect to OAuth.');
-      return;
-    }
-    window.location.href = `${API_BASE_URL.replace('/api', '')}/oauth2/authorization/google`;
-    */
+  login: async (credentials: { email: string; password: string }) => {
+    const response = await api.post('/auth/login', credentials);
+    return response.data;
+  },
+  
+  register: async (userData: { name: string; email: string; password: string }) => {
+    const response = await api.post('/auth/register', userData);
+    return response.data;
   },
   
   logout: async () => {

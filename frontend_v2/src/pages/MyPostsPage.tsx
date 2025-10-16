@@ -212,7 +212,7 @@ const MyPostsPage: React.FC = () => {
             <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6 dark:bg-dark2 dark:border-slate-700">
               <div className="flex items-center gap-3">
                 <IonIcon icon={documentText} className="text-2xl text-blue-500" />
-                <h1 className="text-lg font-bold text-gray-900 dark:text-white">My Posts</h1>
+                <h1 className="text-lg font-bold text-gray-900 dark:text-white">My Best Uruttus! 🏆</h1>
               </div>
               <p className="text-gray-600 dark:text-gray-400 mt-2">
                 All your posts and threads
@@ -227,7 +227,7 @@ const MyPostsPage: React.FC = () => {
                     <IonIcon icon={create} className="text-lg text-blue-600 dark:text-blue-400" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Posts</p>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total</p>
                     <p className="text-xl font-bold text-gray-900 dark:text-white">{myThreads.length}</p>
                   </div>
                 </div>
@@ -239,7 +239,7 @@ const MyPostsPage: React.FC = () => {
                     <IonIcon icon={eye} className="text-lg text-green-600 dark:text-green-400" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Public Posts</p>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Public</p>
                     <p className="text-xl font-bold text-gray-900 dark:text-white">
                       {myThreads.filter(t => t.replyPermission === 'ANYONE').length}
                     </p>
@@ -253,7 +253,7 @@ const MyPostsPage: React.FC = () => {
                     <IonIcon icon={lockClosed} className="text-lg text-purple-600 dark:text-purple-400" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Private Posts</p>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Private</p>
                     <p className="text-xl font-bold text-gray-900 dark:text-white">
                       {myThreads.filter(t => t.replyPermission !== 'ANYONE').length}
                     </p>

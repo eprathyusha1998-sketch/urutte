@@ -170,8 +170,7 @@ const LikesPage: React.FC = () => {
             {/* Header */}
             <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6 dark:bg-dark2 dark:border-slate-700">
               <div className="flex items-center gap-3">
-                <IonIcon icon={heart} className="text-2xl text-red-500" />
-                <h1 className="text-lg font-bold text-gray-900 dark:text-white">Liked Threads</h1>
+                <h1 className="text-lg font-bold text-gray-900 dark:text-white">Favorite Uruttus! ❤️</h1>
               </div>
               <p className="text-gray-600 dark:text-gray-400 mt-2">
                 Your recently liked threads

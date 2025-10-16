@@ -302,7 +302,7 @@ const NewThreadModal: React.FC<NewThreadModalProps> = ({
           </button>
           
           <h2 className="text-lg font-bold text-black dark:text-white">
-            New thread
+            New Urutte! 🚀
           </h2>
           
           <button

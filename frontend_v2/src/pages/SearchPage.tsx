@@ -137,9 +137,8 @@ const SearchPage: React.FC = () => {
           <div className="flex-1 max-w-2xl">
             {/* Search Header */}
             <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6 dark:bg-dark2 dark:border-slate-700">
-              <div className="flex items-center gap-3 mb-4">
-                <IonIcon icon={search} className="text-2xl text-blue-500" />
-                <h1 className="text-lg font-bold text-gray-900 dark:text-white">Search Threads</h1>
+              <div className="flex items-center gap-3">
+                <h1 className="text-lg font-bold text-gray-900 dark:text-white">Find Some Uruttus! 🔍</h1>
               </div>
               
               {/* Search Form */}

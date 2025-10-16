@@ -3,7 +3,6 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { IonIcon } from '@ionic/react';
 import { 
   home, 
-  notifications, 
   person, 
   search,
   add,
@@ -162,24 +161,6 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser, onToggleTheme, isDarkMod
               />
             </button>
 
-            {/* Notifications */}
-            <button
-              onClick={() => handleNavigation('/notifications')}
-              className={`w-12 h-12 flex items-center justify-center rounded-full transition-colors ${
-                location.pathname === '/notifications' && !isCreateModalOpen
-                  ? 'bg-gray-100 dark:bg-slate-600' 
-                  : 'hover:bg-gray-50 dark:hover:bg-slate-700'
-              }`}
-            >
-              <IonIcon 
-                icon={notifications} 
-                className={`text-2xl ${
-                  location.pathname === '/notifications' && !isCreateModalOpen
-                    ? 'text-black dark:text-white' 
-                    : 'text-gray-400 dark:text-gray-500'
-                }`} 
-              />
-            </button>
 
             {/* Profile */}
             <div className="relative" ref={dropdownRef}>

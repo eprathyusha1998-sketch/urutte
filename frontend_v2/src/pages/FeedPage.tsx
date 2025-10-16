@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { IonIcon } from '@ionic/react';
 import { 
   closeOutline, 
@@ -18,6 +18,7 @@ import { useInfiniteScroll } from '../hooks';
 
 const FeedPage: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [threads, setThreads] = useState<Thread[]>([]);
   const [loading, setLoading] = useState(true);
@@ -30,9 +31,19 @@ const FeedPage: React.FC = () => {
   const [showNewThreadModal, setShowNewThreadModal] = useState(false);
 
   useEffect(() => {
+    // Check for OAuth token from URL
+    const tokenFromUrl = searchParams.get('token');
+    if (tokenFromUrl) {
+      localStorage.setItem('access_token', tokenFromUrl);
+      // Remove token from URL
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete('token');
+      window.history.replaceState({}, '', newUrl.toString());
+    }
+
     const token = localStorage.getItem('access_token');
     if (!token) {
-      navigate('/login');
+      navigate('/');
       return;
     }
 
@@ -56,7 +67,7 @@ const FeedPage: React.FC = () => {
     };
 
     fetchData();
-  }, [navigate]);
+  }, [navigate, searchParams]);
 
   const fetchFeed = async () => {
     try {
@@ -201,6 +212,14 @@ const FeedPage: React.FC = () => {
         <div className="max-w-6xl mx-auto flex gap-12" id="js-oversized">
           {/* Feed Content */}
           <div className="flex-1 max-w-2xl">
+            {/* Header */}
+            <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6 dark:bg-dark2 dark:border-slate-700">
+              <div className="flex items-center gap-3">
+                <h1 className="text-lg font-bold text-gray-900 dark:text-white">Uruttus for You! 🎯</h1>
+              </div>
+              <p className="text-gray-600 dark:text-gray-400 mt-2">Latest urutus from people you follow</p>
+            </div>
+
           {/* Center Feed */}
           <div className="space-y-6">
             {/* Create Post Button */}
@@ -233,16 +252,16 @@ const FeedPage: React.FC = () => {
                   </div>
                 </div>
                 <div className="flex-1 text-left">
-                  <span className="text-gray-500 dark:text-gray-400">Start a thread...</span>
+                  <span className="text-gray-500 dark:text-gray-400">Lets Urutte!</span>
                 </div>
                 <IonIcon icon={add} className="text-xl text-gray-400 dark:text-gray-500" />
               </button>
             </div>
                                   
-            {/* Threads Feed */}
+            {/* Urutus Feed */}
             {threads.length === 0 ? (
               <div className="bg-white rounded-2xl border border-gray-200 p-8 text-center dark:bg-dark2 dark:border-slate-700">
-                <p className="text-gray-500 dark:text-white/70">No threads yet. Start the conversation!</p>
+                <p className="text-gray-500 dark:text-white/70">No urutus yet. Start the conversation!</p>
               </div>
             ) : (
               <>
@@ -385,7 +404,7 @@ const FeedPage: React.FC = () => {
                 disabled={!quoteContent.trim()}
                 className="flex-1 bg-black text-white dark:bg-white dark:text-black py-2 px-4 rounded-full text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors"
               >
-                Quote Repost
+                Urutte Urutte!
               </button>
             </div>
           </div>

@@ -237,7 +237,7 @@ const PostActions: React.FC<PostActionsProps> = ({
       <Modal
         isOpen={showQuoteModal}
         onClose={() => setShowQuoteModal(false)}
-        title="Quote Repost"
+        title="Urutte Urutte!"
         size="lg"
       >
         {/* Original Post */}
@@ -320,7 +320,7 @@ const PostActions: React.FC<PostActionsProps> = ({
                 onClick={handleQuoteRepost}
                 disabled={(!quoteContent.trim() && !selectedQuoteMedia)}
               >
-                Quote Repost
+                Urutte Urutte!
               </Button>
             </div>
           </div>

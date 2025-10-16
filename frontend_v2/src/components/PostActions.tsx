@@ -262,7 +262,7 @@ const PostActions: React.FC<PostActionsProps> = ({
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-dark2 rounded-2xl p-6 w-full max-w-2xl mx-4">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Quote Repost</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Urutte Urutte!</h3>
               <button
                 onClick={() => setShowQuoteModal(false)}
                 className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full"
@@ -357,7 +357,7 @@ const PostActions: React.FC<PostActionsProps> = ({
                     disabled={(!quoteContent.trim() && !selectedQuoteMedia) || isReposting}
                     className="bg-green-500 text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
-                    {isReposting ? 'Posting...' : 'Quote Repost'}
+                    {isReposting ? 'Posting...' : 'Urutte Urutte!'}
                   </button>
                 </div>
               </div>
