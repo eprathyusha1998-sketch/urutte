@@ -22,7 +22,7 @@ services:
       retries: 5
 
   backend:
-    image: urutte-backend
+    image: urutte-backend-prod
     container_name: urutte-backend
     restart: always
     environment:
@@ -32,7 +32,7 @@ services:
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID: 1051698753493-sn49e56i0qt9fqh47kd3dpcv11lk03v3.apps.googleusercontent.com
       SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_SECRET: 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
-      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_REDIRECT_URI: https://urutte.com/oauth2/authorization/google
+      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_REDIRECT_URI: https://urutte.com/login/oauth2/code/google
       SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_SCOPE: profile,email
       APP_OAUTH2_REDIRECT_URI: https://urutte.com/login?token={token}
       APP_FRONTEND_URL: https://urutte.com
@@ -58,7 +58,7 @@ services:
       retries: 3
 
   frontend:
-    image: urutte-frontend
+    image: urutte-frontend-prod
     container_name: urutte-frontend
     restart: always
     expose:

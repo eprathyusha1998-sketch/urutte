@@ -142,6 +142,16 @@ public class TopicService {
     }
     
     /**
+     * Create a new topic with all parameters
+     */
+    public Topic createTopic(String name, String description, String aiPrompt, String category, String keywords, Integer priority, Integer threadsPerRun) {
+        Topic topic = new Topic(name, description, aiPrompt, category, keywords);
+        topic.setPriority(priority);
+        topic.setThreadsPerRun(threadsPerRun);
+        return topicRepository.save(topic);
+    }
+    
+    /**
      * Update a topic
      */
     public Topic updateTopic(String id, String name, String description, String aiPrompt, String category, String keywords, Integer priority, Integer threadsPerRun) {
@@ -175,6 +185,13 @@ public class TopicService {
      */
     public Optional<Topic> getTopicById(String id) {
         return topicRepository.findById(id);
+    }
+    
+    /**
+     * Get topic by name
+     */
+    public Optional<Topic> getTopicByName(String name) {
+        return topicRepository.findByName(name);
     }
     
     /**
@@ -233,7 +250,12 @@ public class TopicService {
             {"White House", "Updates on Trump, Senate, Congress and US political developments", "Generate content about US political developments, White House news, Trump updates, Senate proceedings, and Congressional activities", "Politics", "Trump,Senate,Congress,White House,US politics"},
             {"AI Innovation", "Latest developments in artificial intelligence and technology innovation", "Generate content about AI breakthroughs, tech innovations, machine learning developments, and emerging technologies", "Technology", "AI,artificial intelligence,technology,innovation,machine learning"},
             {"TVK Tamil Politics", "Updates on Tamil politics and TVK party developments", "Generate content about Tamil political developments, TVK party news, and Tamil political landscape", "Politics", "TVK,Tamil politics,political developments"},
-            {"Top US News", "Breaking news and important updates from across the United States", "Generate content about major US news stories, political developments, and significant events across the country", "News", "US news,breaking news,political developments"}
+            {"Top US News", "Breaking news and important updates from across the United States", "Generate content about major US news stories, political developments, and significant events across the country", "News", "US news,breaking news,political developments"},
+            {"India News", "Latest news and updates from across India", "Generate content about major Indian news stories, political developments, economic updates, and significant events across India", "News", "India news,Indian politics,Indian economy,breaking news India"},
+            {"Tamil Nadu News", "Latest news and updates from Tamil Nadu state", "Generate content about Tamil Nadu politics, development news, Chennai updates, and significant events in Tamil Nadu", "News", "Tamil Nadu,Chennai,Tamil politics,TN news,Tamil Nadu development"},
+            {"Cricket News", "Latest cricket news, match updates, and player news", "Generate content about cricket matches, player performances, IPL updates, international cricket, and cricket controversies", "Sports", "cricket,IPL,BCCI,Indian cricket,international cricket,cricket news"},
+            {"Bollywood News", "Latest Bollywood news, movie releases, and celebrity updates", "Generate content about Bollywood movies, celebrity news, film releases, box office updates, and entertainment industry news", "Entertainment", "Bollywood,Hindi movies,Bollywood news,celebrity news,film industry"},
+            {"South Indian Movies", "Latest news from South Indian cinema including Tamil, Telugu, Malayalam, and Kannada films", "Generate content about South Indian movies, regional cinema, Kollywood, Tollywood, Mollywood, and Sandalwood news", "Entertainment", "South Indian movies,Kollywood,Tollywood,Mollywood,Sandalwood,regional cinema"}
         };
         
         for (String[] topicData : defaultTopics) {

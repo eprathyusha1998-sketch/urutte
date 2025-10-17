@@ -28,6 +28,9 @@ public class AiContentController {
     @Autowired
     private AiContentScheduler aiContentScheduler;
     
+    @Autowired
+    private IndiaContentScheduler indiaContentScheduler;
+    
     // AI Admin endpoints
     
     @GetMapping("/ai-admin")
@@ -211,6 +214,98 @@ public class AiContentController {
         } catch (Exception e) {
             Map<String, String> response = new HashMap<>();
             response.put("message", "Error initializing system: " + e.getMessage());
+            response.put("status", "error");
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
+    
+    @PostMapping("/generate/india")
+    public ResponseEntity<Map<String, String>> generateIndiaContentNow() {
+        try {
+            indiaContentScheduler.generateIndiaContentNow();
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "India content generation started successfully");
+            response.put("status", "success");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Error starting India content generation: " + e.getMessage());
+            response.put("status", "error");
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
+    
+    @PostMapping("/topics/update-all-to-5-posts")
+    public ResponseEntity<Map<String, String>> updateAllTopicsTo5Posts() {
+        try {
+            List<Topic> allTopics = topicService.getAllActiveTopics();
+            int updated = 0;
+            
+            for (Topic topic : allTopics) {
+                topic.setThreadsPerRun(5);
+                topicService.updateTopic(
+                    topic.getId(),
+                    topic.getName(),
+                    topic.getDescription(),
+                    topic.getAiPrompt(),
+                    topic.getCategory(),
+                    topic.getKeywords(),
+                    topic.getPriority(),
+                    5 // Set to 5 posts per run
+                );
+                updated++;
+            }
+            
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Updated " + updated + " topics to generate 5 posts per run");
+            response.put("status", "success");
+            response.put("updated", String.valueOf(updated));
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Error updating topics: " + e.getMessage());
+            response.put("status", "error");
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
+    
+    @PostMapping("/topics/create-india-topics")
+    public ResponseEntity<Map<String, String>> createIndiaTopics() {
+        try {
+            // Create India-focused topics with high priority for hourly generation
+            String[][] indiaTopics = {
+                {"India News", "Latest news and updates from across India", "Generate content about major Indian news stories, political developments, economic updates, and significant events across India", "News", "India news,Indian politics,Indian economy,breaking news India", "1", "5"},
+                {"Tamil Nadu News", "Latest news and updates from Tamil Nadu state", "Generate content about Tamil Nadu politics, development news, Chennai updates, and significant events in Tamil Nadu", "News", "Tamil Nadu,Chennai,Tamil politics,TN news,Tamil Nadu development", "1", "5"},
+                {"Cricket News", "Latest cricket news, match updates, and player news", "Generate content about cricket matches, player performances, IPL updates, international cricket, and cricket controversies", "Sports", "cricket,IPL,BCCI,Indian cricket,international cricket,cricket news", "1", "5"},
+                {"Bollywood News", "Latest Bollywood news, movie releases, and celebrity updates", "Generate content about Bollywood movies, celebrity news, film releases, box office updates, and entertainment industry news", "Entertainment", "Bollywood,Hindi movies,Bollywood news,celebrity news,film industry", "1", "5"},
+                {"South Indian Movies", "Latest news from South Indian cinema including Tamil, Telugu, Malayalam, and Kannada films", "Generate content about South Indian movies, regional cinema, Kollywood, Tollywood, Mollywood, and Sandalwood news", "Entertainment", "South Indian movies,Kollywood,Tollywood,Mollywood,Sandalwood,regional cinema", "1", "5"}
+            };
+            
+            int created = 0;
+            for (String[] topicData : indiaTopics) {
+                String name = topicData[0];
+                String description = topicData[1];
+                String aiPrompt = topicData[2];
+                String category = topicData[3];
+                String keywords = topicData[4];
+                Integer priority = Integer.parseInt(topicData[5]);
+                Integer threadsPerRun = Integer.parseInt(topicData[6]);
+                
+                // Check if topic already exists
+                if (!topicService.getTopicByName(name).isPresent()) {
+                    topicService.createTopic(name, description, aiPrompt, category, keywords, priority, threadsPerRun);
+                    created++;
+                }
+            }
+            
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Created " + created + " new India-focused topics");
+            response.put("status", "success");
+            response.put("created", String.valueOf(created));
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Error creating India topics: " + e.getMessage());
             response.put("status", "error");
             return ResponseEntity.internalServerError().body(response);
         }

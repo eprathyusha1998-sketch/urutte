@@ -43,6 +43,9 @@ public class ContentGenerationService {
     @Autowired
     private RestTemplate restTemplate;
     
+    @Autowired
+    private TrendingNewsService trendingNewsService;
+    
     @Value("${app.ai.openai.api-key:}")
     private String openaiApiKey;
     
@@ -212,10 +215,16 @@ public class ContentGenerationService {
         List<NewsItem> newsItems = new ArrayList<>();
         
         try {
-            // Use multiple sources for better coverage
+            // Try external sources first
             newsItems.addAll(fetchFromReddit(topic));
             newsItems.addAll(fetchFromHackerNews(topic));
             newsItems.addAll(fetchFromRSS(topic));
+            
+            // If no external news found, use trending news generator
+            if (newsItems.isEmpty()) {
+                logger.info("No external news found for topic: {}, using trending news generator", topic.getName());
+                newsItems.addAll(trendingNewsService.generateTrendingNews(topic));
+            }
             
             // Sort by relevance and recency
             newsItems.sort((a, b) -> {
@@ -230,7 +239,13 @@ public class ContentGenerationService {
             logger.info("Fetched {} news items for topic: {}", newsItems.size(), topic.getName());
             
         } catch (Exception e) {
-            logger.error("Error fetching news for topic: {}", topic.getName(), e);
+            logger.error("Error fetching news for topic: {}, falling back to trending news", topic.getName(), e);
+            // Fallback to trending news if everything fails
+            try {
+                newsItems.addAll(trendingNewsService.generateTrendingNews(topic));
+            } catch (Exception fallbackException) {
+                logger.error("Error in fallback news generation for topic: {}", topic.getName(), fallbackException);
+            }
         }
         
         return newsItems;
@@ -421,15 +436,18 @@ public class ContentGenerationService {
             String prompt = String.format(
                 "Create an engaging social media post about this news story. " +
                 "Make it conversational, informative, and encourage discussion. " +
-                "Keep it under 280 characters and include relevant hashtags. " +
+                "Keep it under 400 characters and include relevant hashtags. " +
+                "ALWAYS include the source link at the end of the post. " +
+                "Format: [Your engaging post content] [Source: %s] [Hashtags] " +
                 "Topic: %s\n" +
                 "News Title: %s\n" +
                 "News Content: %s\n" +
-                "Source: %s",
+                "Source URL: %s",
+                newsItem.getUrl(),
                 topic.getName(),
                 newsItem.getTitle(),
                 newsItem.getContent(),
-                newsItem.getSource()
+                newsItem.getUrl()
             );
             
             Map<String, Object> requestBody = new HashMap<>();
@@ -438,7 +456,7 @@ public class ContentGenerationService {
                 Map.of("role", "system", "content", "You are a social media content creator who creates engaging posts about technology and current events."),
                 Map.of("role", "user", "content", prompt)
             ));
-            requestBody.put("max_tokens", 150);
+            requestBody.put("max_tokens", 200);
             requestBody.put("temperature", 0.7);
             
             HttpHeaders headers = new HttpHeaders();
@@ -472,17 +490,18 @@ public class ContentGenerationService {
             .collect(Collectors.joining(" "));
         
         String content = String.format(
-            "🔥 %s\n\n%s\n\nWhat are your thoughts on this? %s",
+            "🔥 %s\n\n%s\n\nWhat are your thoughts on this?\n\nSource: %s\n\n%s",
             newsItem.getTitle(),
             newsItem.getContent().length() > 200 ? 
                 newsItem.getContent().substring(0, 200) + "..." : 
                 newsItem.getContent(),
+            newsItem.getUrl(),
             hashtags
         );
         
         // Ensure content is not too long
-        if (content.length() > 500) {
-            content = content.substring(0, 497) + "...";
+        if (content.length() > 800) {
+            content = content.substring(0, 797) + "...";
         }
         
         return content;

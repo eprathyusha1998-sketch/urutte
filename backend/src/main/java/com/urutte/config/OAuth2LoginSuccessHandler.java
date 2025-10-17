@@ -31,6 +31,9 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
 
     @Value("${app.frontend.url:http://localhost}")
     private String frontendUrl;
+    
+    @Value("${app.oauth2.redirect-uri:http://localhost/?token={token}}")
+    private String oauth2RedirectUri;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
@@ -105,7 +108,7 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
             String token = jwtUtil.generateToken(user.getId(), user.getEmail());
             
             // Redirect to frontend with token
-            String redirectUrl = frontendUrl + "/?token=" + token;
+            String redirectUrl = oauth2RedirectUri.replace("{token}", token);
             System.out.println("Redirecting to: " + redirectUrl);
             
             getRedirectStrategy().sendRedirect(request, response, redirectUrl);

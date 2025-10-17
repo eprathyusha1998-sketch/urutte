@@ -51,7 +51,10 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSuccess, onS
     
     // Small delay to show loading state
     setTimeout(() => {
-      window.location.href = 'http://localhost:8080/oauth2/authorization/google';
+      // Use environment variable or detect current domain
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
+      const baseUrl = apiUrl.replace('/api', '');
+      window.location.href = `${baseUrl}/oauth2/authorization/google`;
     }, 100);
   };
 

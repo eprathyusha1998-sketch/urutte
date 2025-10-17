@@ -14,7 +14,8 @@ interface RegisterModalProps {
 
 const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose, onSuccess, onSwitchToLogin }) => {
   const [formData, setFormData] = useState({
-    name: '',
+    firstName: '',
+    lastName: '',
     email: '',
     password: '',
     confirmPassword: ''
@@ -54,9 +55,11 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose, onSucces
 
     try {
       const response = await authApi.register({
-        name: formData.name,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
         email: formData.email,
-        password: formData.password
+        password: formData.password,
+        confirmPassword: formData.confirmPassword
       });
       localStorage.setItem('access_token', response.token);
       showSuccess('Welcome to Urutte!', 'Your account has been created successfully!');
@@ -79,7 +82,10 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose, onSucces
     
     // Small delay to show loading state
     setTimeout(() => {
-      window.location.href = 'http://localhost:8080/oauth2/authorization/google';
+      // Use environment variable or detect current domain
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
+      const baseUrl = apiUrl.replace('/api', '');
+      window.location.href = `${baseUrl}/oauth2/authorization/google`;
     }, 100);
   };
 
@@ -115,8 +121,8 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose, onSucces
                 type="text"
                 id="firstName"
                 name="firstName"
-                value={formData.name.split(' ')[0] || ''}
-                onChange={(e) => setFormData({...formData, name: e.target.value + ' ' + formData.name.split(' ').slice(1).join(' ')})}
+                value={formData.firstName}
+                onChange={handleChange}
                 required
                 className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
                 placeholder="First name"
@@ -130,8 +136,8 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose, onSucces
                 type="text"
                 id="lastName"
                 name="lastName"
-                value={formData.name.split(' ').slice(1).join(' ') || ''}
-                onChange={(e) => setFormData({...formData, name: (formData.name.split(' ')[0] || '') + ' ' + e.target.value})}
+                value={formData.lastName}
+                onChange={handleChange}
                 required
                 className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
                 placeholder="Last name"
