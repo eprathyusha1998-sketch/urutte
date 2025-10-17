@@ -46,6 +46,15 @@ public class ContentGenerationService {
     @Autowired
     private TrendingNewsService trendingNewsService;
     
+    @Autowired
+    private IndiaNewsService indiaNewsService;
+    
+    @Autowired
+    private NewsScrapingService newsScrapingService;
+    
+    @Autowired
+    private GuardianNewsService guardianNewsService;
+    
     @Value("${app.ai.openai.api-key:}")
     private String openaiApiKey;
     
@@ -215,15 +224,57 @@ public class ContentGenerationService {
         List<NewsItem> newsItems = new ArrayList<>();
         
         try {
-            // Try external sources first
-            newsItems.addAll(fetchFromReddit(topic));
-            newsItems.addAll(fetchFromHackerNews(topic));
-            newsItems.addAll(fetchFromRSS(topic));
+            // First, try Guardian API for real-time news
+            logger.info("Attempting to fetch real-time news from Guardian API for topic: {}", topic.getName());
+            try {
+                newsItems.addAll(guardianNewsService.fetchNewsForTopic(topic));
+                logger.info("Successfully fetched {} Guardian news items for topic: {}", newsItems.size(), topic.getName());
+            } catch (Exception e) {
+                logger.warn("Guardian API failed for topic {}: {}", topic.getName(), e.getMessage());
+            }
             
-            // If no external news found, use trending news generator
-            if (newsItems.isEmpty()) {
-                logger.info("No external news found for topic: {}, using trending news generator", topic.getName());
-                newsItems.addAll(trendingNewsService.generateTrendingNews(topic));
+            // If we got good news from Guardian, use it
+            if (!newsItems.isEmpty() && newsItems.size() >= 3) {
+                logger.info("Using Guardian API news for topic: {} ({} items)", topic.getName(), newsItems.size());
+            } else {
+                // Fallback to other sources if Guardian didn't yield enough results
+                logger.info("Insufficient Guardian news ({} items), trying other sources for topic: {}", newsItems.size(), topic.getName());
+                
+                // Check if this is an India-related topic
+                String topicName = topic.getName().toLowerCase();
+                String keywords = topic.getKeywords().toLowerCase();
+                
+                if (topicName.contains("india") || topicName.contains("tamil") || topicName.contains("cricket") || 
+                    topicName.contains("bollywood") || keywords.contains("india") || keywords.contains("tamil") ||
+                    keywords.contains("cricket") || keywords.contains("bollywood")) {
+                    
+                    logger.info("Using India-specific news generator for topic: {}", topic.getName());
+                    newsItems.addAll(indiaNewsService.generateIndiaNews(topic));
+                } else {
+                    // Try RSS scraping for non-India topics
+                    try {
+                        newsItems.addAll(newsScrapingService.scrapeNewsForTopic(topic));
+                        logger.info("Successfully scraped {} RSS news items for topic: {}", newsItems.size(), topic.getName());
+                    } catch (Exception e) {
+                        logger.warn("RSS scraping failed for topic {}: {}", topic.getName(), e.getMessage());
+                    }
+                    
+                    // If we still don't have enough news, try other sources
+                    if (newsItems.size() < 3) {
+                        logger.info("Insufficient news ({} items), trying other sources for topic: {}", newsItems.size(), topic.getName());
+                        
+                        // Try external sources
+                        newsItems.addAll(fetchFromReddit(topic));
+                        newsItems.addAll(fetchFromHackerNews(topic));
+                        newsItems.addAll(fetchFromRSS(topic));
+                        
+                        // If no external news found, use trending news generator
+                        if (newsItems.isEmpty()) {
+                            logger.info("No external news found for topic: {}, using trending news generator", topic.getName());
+                            newsItems.addAll(trendingNewsService.generateTrendingNews(topic));
+                        }
+                    }
+                }
             }
             
             // Sort by relevance and recency
@@ -547,6 +598,7 @@ public class ContentGenerationService {
         private int score;
         private Date publishedAt;
         private String source;
+        private String thumbnail;
         
         // Getters and setters
         public String getTitle() { return title; }
@@ -566,5 +618,8 @@ public class ContentGenerationService {
         
         public String getSource() { return source; }
         public void setSource(String source) { this.source = source; }
+        
+        public String getThumbnail() { return thumbnail; }
+        public void setThumbnail(String thumbnail) { this.thumbnail = thumbnail; }
     }
 }

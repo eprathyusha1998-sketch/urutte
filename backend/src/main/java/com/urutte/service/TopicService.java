@@ -13,6 +13,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -138,6 +139,7 @@ public class TopicService {
      */
     public Topic createTopic(String name, String description, String aiPrompt, String category, String keywords) {
         Topic topic = new Topic(name, description, aiPrompt, category, keywords);
+        topic.setId(UUID.randomUUID().toString());
         return topicRepository.save(topic);
     }
     
@@ -146,6 +148,7 @@ public class TopicService {
      */
     public Topic createTopic(String name, String description, String aiPrompt, String category, String keywords, Integer priority, Integer threadsPerRun) {
         Topic topic = new Topic(name, description, aiPrompt, category, keywords);
+        topic.setId(UUID.randomUUID().toString());
         topic.setPriority(priority);
         topic.setThreadsPerRun(threadsPerRun);
         return topicRepository.save(topic);
@@ -165,6 +168,25 @@ public class TopicService {
         topic.setKeywords(keywords);
         topic.setPriority(priority);
         topic.setThreadsPerRun(threadsPerRun);
+        
+        return topicRepository.save(topic);
+    }
+    
+    /**
+     * Update a topic with all parameters including last generated timestamp
+     */
+    public Topic updateTopic(String id, String name, String description, String aiPrompt, String category, String keywords, Integer priority, Integer threadsPerRun, java.time.LocalDateTime lastGeneratedAt) {
+        Topic topic = topicRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Topic not found"));
+        
+        topic.setName(name);
+        topic.setDescription(description);
+        topic.setAiPrompt(aiPrompt);
+        topic.setCategory(category);
+        topic.setKeywords(keywords);
+        topic.setPriority(priority);
+        topic.setThreadsPerRun(threadsPerRun);
+        topic.setLastGeneratedAt(lastGeneratedAt);
         
         return topicRepository.save(topic);
     }
