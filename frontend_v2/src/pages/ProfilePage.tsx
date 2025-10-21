@@ -14,24 +14,9 @@ import { getProfileImageUrl } from '../utils/mediaUtils';
 import { useNotification } from '../contexts/NotificationContext';
 import { authApi, threadsApi } from '../services/api';
 import { isAuthenticated } from '../utils/auth';
+import { User } from '../types';
 import Sidebar from '../components/Sidebar';
 import NewThreadModal from '../components/NewThreadModal';
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  username?: string;
-  picture?: string;
-  coverPhoto?: string;
-  bio?: string;
-  location?: string;
-  website?: string;
-  phoneNumber?: string;
-  dateOfBirth?: string;
-  gender?: string;
-  isPrivate?: boolean;
-}
 
 interface ProfilePageProps {
   currentUser?: User;
@@ -328,6 +313,28 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ currentUser: propCurrentUser,
               {currentUser.bio && (
                 <p className="text-gray-600 dark:text-gray-300 mt-2">{currentUser.bio}</p>
               )}
+              
+              {/* Profile Stats */}
+              <div className="flex gap-6 mt-4">
+                <button
+                  onClick={() => navigate(`/following/${currentUser.id}`)}
+                  className="flex items-center gap-1 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                >
+                  <span className="font-semibold">{currentUser.followingCount || 0}</span>
+                  <span className="text-sm">Following</span>
+                </button>
+                <button
+                  onClick={() => navigate(`/following/${currentUser.id}`)}
+                  className="flex items-center gap-1 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                >
+                  <span className="font-semibold">{currentUser.followersCount || 0}</span>
+                  <span className="text-sm">Followers</span>
+                </button>
+                <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
+                  <span className="font-semibold">{currentUser.postsCount || 0}</span>
+                  <span className="text-sm">Posts</span>
+                </div>
+              </div>
             </div>
 
             <div className="flex gap-2">

@@ -354,7 +354,7 @@ public class AiContentController {
             Map<String, String> response = new HashMap<>();
             response.put("message", "AI Assistant password set successfully");
             response.put("status", "success");
-            response.put("email", "ai@urutte.com");
+            response.put("email", "ai.assistant@urutte.com");
             response.put("password", password);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
@@ -900,7 +900,7 @@ public class AiContentController {
             if (aiUserOpt.isPresent()) {
                 User aiUser = aiUserOpt.get();
                 aiUser.setName("AI Assistant");
-                aiUser.setEmail("ai@urutte.com");
+                aiUser.setEmail("ai.assistant@urutte.com");
                 aiUser.setUsername("ai_assistant_bot");
                 aiUser.setIsActive(true);
                 aiUser.setUpdatedAt(java.time.Instant.now());
@@ -1143,4 +1143,5 @@ public class AiContentController {
             return ResponseEntity.internalServerError().body(response);
         }
     }
+    
 }

@@ -464,6 +464,11 @@ export const usersApi = {
     return response.data;
   },
 
+  getFollowing: async (userId: string) => {
+    const response = await api.get(`/users/${userId}/following`);
+    return response.data;
+  },
+
   getFollowRequests: async () => {
     const response = await api.get('/users/follow-requests');
     return response.data;

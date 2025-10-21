@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 interface UseInfiniteScrollOptions {
   hasMore: boolean;
   loading: boolean;
-  onLoadMore: () => void;
+  onLoadMore: () => Promise<void>;
   threshold?: number;
 }
 
@@ -18,14 +18,22 @@ export const useInfiniteScroll = ({
   const loadingRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (loading || !hasMore) return;
+    if (loading || !hasMore) {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+      return;
+    }
 
     const observer = new IntersectionObserver(
       (entries) => {
         const target = entries[0];
         if (target.isIntersecting && hasMore && !loading && !isFetching) {
+          console.log('Infinite scroll triggered - loading more content');
           setIsFetching(true);
-          onLoadMore();
+          onLoadMore().finally(() => {
+            setIsFetching(false);
+          });
         }
       },
       {
@@ -38,6 +46,7 @@ export const useInfiniteScroll = ({
 
     if (loadingRef.current) {
       observer.observe(loadingRef.current);
+      console.log('Intersection observer attached to loading element');
     }
 
     return () => {
@@ -45,13 +54,7 @@ export const useInfiniteScroll = ({
         observerRef.current.disconnect();
       }
     };
-  }, [hasMore, loading, onLoadMore, threshold, isFetching]);
-
-  useEffect(() => {
-    if (isFetching && !loading) {
-      setIsFetching(false);
-    }
-  }, [isFetching, loading]);
+  }, [hasMore, loading, threshold]); // Removed onLoadMore from dependencies to prevent observer recreation
 
   return { loadingRef, isFetching };
 };

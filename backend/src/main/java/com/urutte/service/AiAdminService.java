@@ -66,14 +66,14 @@ public class AiAdminService {
      * Set password for AI Assistant user to enable email/password login
      */
     public void setAiAssistantPassword(String password) {
-        Optional<User> aiUser = userRepository.findByEmail("ai@urutte.com");
+        Optional<User> aiUser = userRepository.findByEmail("ai.assistant@urutte.com");
         if (aiUser.isPresent()) {
             User user = aiUser.get();
             user.setPassword(passwordEncoder.encode(password));
             userRepository.save(user);
             logger.info("Set password for AI Assistant user: {}", user.getEmail());
         } else {
-            logger.warn("AI Assistant user not found with email: ai@urutte.com");
+            logger.warn("AI Assistant user not found with email: ai.assistant@urutte.com");
         }
     }
     
@@ -81,7 +81,7 @@ public class AiAdminService {
      * Ensure AI Assistant has a password set for login
      */
     public void ensureAiAssistantHasPassword() {
-        Optional<User> aiUser = userRepository.findByEmail("ai@urutte.com");
+        Optional<User> aiUser = userRepository.findByEmail("ai.assistant@urutte.com");
         if (aiUser.isPresent()) {
             User user = aiUser.get();
             if (user.getPassword() == null || user.getPassword().isEmpty()) {
@@ -104,7 +104,7 @@ public class AiAdminService {
         AiAdmin aiAdmin = new AiAdmin(
             "AI Assistant",
             "ai_assistant",
-            "ai@urutte.com",
+            "ai.assistant@urutte.com",
             "🤖 AI-powered content curator bringing you the latest trends and discussions from across the web. Always learning, always sharing!",
             avatarUrl
         );

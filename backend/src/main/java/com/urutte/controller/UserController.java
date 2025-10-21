@@ -134,6 +134,27 @@ public class UserController {
         }
     }
     
+    @DeleteMapping("/{userId}/follow")
+    public ResponseEntity<UserDto> unfollowUser(
+            @PathVariable String userId,
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @AuthenticationPrincipal OidcUser principal) {
+        
+        try {
+            User currentUser = getCurrentUserFromAuth(authHeader, principal);
+            if (currentUser == null) {
+                return ResponseEntity.status(401).build();
+            }
+            
+            UserDto userDto = userService.unfollowUser(userId, currentUser.getId());
+            return ResponseEntity.ok(userDto);
+        } catch (Exception e) {
+            System.err.println("Error unfollowing user: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500).build();
+        }
+    }
+    
     @GetMapping("/{userId}/followers")
     public ResponseEntity<List<UserDto>> getFollowers(
             @PathVariable String userId,

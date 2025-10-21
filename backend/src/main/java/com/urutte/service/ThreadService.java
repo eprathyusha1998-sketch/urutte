@@ -202,9 +202,10 @@ public class ThreadService {
         
         if (currentUserId != null && !currentUserId.isEmpty()) {
             // Get public threads + followers-only threads from users that current user follows
+            // Use regular filtering (no topic filtering) to show all regular users' public posts
             threads = threadRepository.findMainThreadsForUser(currentUserId, pageable);
         } else {
-            // For anonymous users, only show public threads
+            // For anonymous users, only show public threads (no AI content)
             threads = threadRepository.findByParentThreadIsNullAndIsDeletedFalseAndIsPublicTrueOrderByCreatedAtDesc(pageable);
         }
         

@@ -11,6 +11,7 @@ import ProfilePage from './pages/ProfilePage';
 import LikesPage from './pages/LikesPage';
 import SearchPage from './pages/SearchPage';
 import MyPostsPage from './pages/MyPostsPage';
+import FollowingPage from './pages/FollowingPage';
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
             <Route path="/likes" element={<LikesPage />} />
             <Route path="/mythread" element={<MyPostsPage />} />
             <Route path="/search" element={<SearchPage />} />
+            <Route path="/following/:userId" element={<FollowingPage />} />
             {/* Redirect all other routes to home */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

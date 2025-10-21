@@ -37,11 +37,14 @@ const FeedPage: React.FC = () => {
   const fetchFeed = async () => {
     try {
       setLoading(true);
+      console.log('Fetching initial feed...');
       const feedData = await threadsApi.getFeed(0, 30);
       const threadsData = feedData.content || feedData;
+      console.log('Initial feed loaded:', threadsData.length, 'threads');
       setThreads(threadsData);
       setCurrentPage(0);
       setHasMore(threadsData.length === 30);
+      console.log('Initial hasMore set to:', threadsData.length === 30);
     } catch (error) {
       console.error('Error fetching feed:', error);
     } finally {
@@ -50,27 +53,35 @@ const FeedPage: React.FC = () => {
   };
 
   const loadMoreThreads = useCallback(async () => {
-    if (loadingMore || !hasMore) return;
+    console.log('loadMoreThreads called', { loadingMore, hasMore, currentPage });
+    if (loadingMore || !hasMore) {
+      console.log('Skipping loadMoreThreads - already loading or no more data');
+      return;
+    }
 
     try {
       setLoadingMore(true);
       const nextPage = currentPage + 1;
+      console.log('Loading page:', nextPage);
       const response = await threadsApi.getFeed(nextPage, 30);
       const newThreads = response.content || response;
+      console.log('Loaded threads:', newThreads.length);
       
       if (newThreads.length > 0) {
         setThreads(prev => [...prev, ...newThreads]);
         setCurrentPage(nextPage);
         setHasMore(newThreads.length === 30);
+        console.log('Updated threads, hasMore:', newThreads.length === 30);
       } else {
         setHasMore(false);
+        console.log('No more threads available');
       }
     } catch (error) {
       console.error('Error loading more threads:', error);
     } finally {
       setLoadingMore(false);
     }
-  }, [currentPage, hasMore, loadingMore]);
+  }, [currentPage, hasMore]);
 
   // Infinite scroll hook
   const { loadingRef } = useInfiniteScroll({
@@ -185,9 +196,12 @@ const FeedPage: React.FC = () => {
                   
                   {/* Loading indicator for infinite scroll */}
                   {hasMore && (
-                    <div ref={loadingRef} className="flex justify-center py-8">
+                    <div ref={loadingRef} className="flex justify-center py-8 min-h-[100px]">
                       {loadingMore ? (
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                        <div className="flex flex-col items-center gap-2">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                          <div className="text-gray-500 dark:text-gray-400 text-sm">Loading more...</div>
+                        </div>
                       ) : (
                         <div className="text-gray-500 dark:text-gray-400 text-sm">
                           Scroll to load more...

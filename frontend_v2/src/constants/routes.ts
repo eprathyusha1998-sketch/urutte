@@ -17,5 +17,6 @@ export const ROUTES = {
 export const DYNAMIC_ROUTES = {
   THREAD_BY_ID: (id: string | number) => `/thread/${id}`,
   PROFILE_BY_USERNAME: (username: string) => `/profile/${username}`,
-  HASHTAG: (tag: string) => `/hashtag/${tag}`
+  HASHTAG: (tag: string) => `/hashtag/${tag}`,
+  FOLLOWING_BY_USER_ID: (userId: string) => `/following/${userId}`
 } as const;

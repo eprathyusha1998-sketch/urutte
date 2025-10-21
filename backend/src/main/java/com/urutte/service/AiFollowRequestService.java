@@ -120,7 +120,7 @@ public class AiFollowRequestService {
      */
     public long getPendingFollowRequestsToAiUserCount() {
         try {
-            User aiUser = userRepository.findByEmail("ai@urutte.com")
+            User aiUser = userRepository.findByEmail("ai.assistant@urutte.com")
                 .orElse(null);
             
             if (aiUser == null) {

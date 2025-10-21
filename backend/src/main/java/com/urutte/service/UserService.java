@@ -193,6 +193,26 @@ public class UserService {
         return convertToDto(userToFollow, currentUserId);
     }
     
+    public UserDto unfollowUser(String userId, String currentUserId) {
+        User userToUnfollow = getOrCreateUser(userId);
+        User currentUser = getOrCreateUser(currentUserId);
+        
+        if (userId.equals(currentUserId)) {
+            throw new RuntimeException("Cannot unfollow yourself");
+        }
+        
+        // Check if currently following
+        if (!followRepository.existsByFollowerIdAndFollowingId(currentUserId, userId)) {
+            throw new RuntimeException("You are not following this user");
+        }
+        
+        // Remove the follow relationship
+        followRepository.findByFollowerAndFollowing(currentUser, userToUnfollow)
+            .ifPresent(followRepository::delete);
+        
+        return convertToDto(userToUnfollow, currentUserId);
+    }
+    
     public List<UserDto> getFollowers(String userId, String currentUserId) {
         List<User> followers = followRepository.findFollowersByUserId(userId);
         return followers.stream()
