@@ -18,13 +18,7 @@ export const useInfiniteScroll = ({
   const loadingRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (loading || !hasMore) {
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-      }
-      return;
-    }
-
+    // Always create observer, but only trigger if conditions are met
     const observer = new IntersectionObserver(
       (entries) => {
         const target = entries[0];
@@ -53,6 +47,8 @@ export const useInfiniteScroll = ({
     if (loadingRef.current) {
       observer.observe(loadingRef.current);
       console.log('Intersection observer attached to loading element');
+    } else {
+      console.log('⚠️ loadingRef.current is null - observer not attached');
     }
 
     return () => {

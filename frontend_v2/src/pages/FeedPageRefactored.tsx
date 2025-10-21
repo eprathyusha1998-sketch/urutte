@@ -22,6 +22,7 @@ const FeedPage: React.FC = () => {
   const [hasMore, setHasMore] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
   const [showNewThreadModal, setShowNewThreadModal] = useState(false);
+  const [testMode, setTestMode] = useState(true); // Test mode to always show loading element
 
   useEffect(() => {
     if (!authLoading && !currentUser) {
@@ -44,7 +45,7 @@ const FeedPage: React.FC = () => {
       setThreads(threadsData);
       setCurrentPage(0);
       setHasMore(threadsData.length === 30);
-      console.log('Initial hasMore set to:', threadsData.length === 30);
+      console.log('🔍 Initial hasMore set to:', threadsData.length === 30, 'threads:', threadsData.length);
     } catch (error) {
       console.error('Error fetching feed:', error);
     } finally {
@@ -199,28 +200,46 @@ const FeedPage: React.FC = () => {
                     />
                   ))}
                   
-                  {/* Loading indicator for infinite scroll */}
-                  {hasMore && (
-                    <div ref={loadingRef} className="flex justify-center py-8 min-h-[100px] border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
-                      {loadingMore ? (
-                        <div className="flex flex-col items-center gap-2">
-                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                          <div className="text-gray-500 dark:text-gray-400 text-sm">Loading more...</div>
+                  {/* Loading indicator for infinite scroll - Always show for testing */}
+                  {(hasMore || testMode) && (
+                    <div 
+                      ref={loadingRef} 
+                      onClick={() => {
+                        console.log('🖱️ Loading area clicked');
+                        if (!loadingMore && (hasMore || testMode)) {
+                          loadMoreThreads();
+                        }
+                      }}
+                      className="flex justify-center py-8 min-h-[100px] border-2 border-dashed border-blue-500 dark:border-blue-400 rounded-lg bg-blue-50 dark:bg-blue-900/20 cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+                    >
+                    {loadingMore ? (
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                        <div className="text-gray-500 dark:text-gray-400 text-sm">Loading more...</div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="text-gray-500 dark:text-gray-400 text-sm">
+                          {hasMore ? "Click here or scroll to load more..." : testMode ? "Test Mode - Click to test loading" : "No more content available"}
                         </div>
-                      ) : (
-                        <div className="flex flex-col items-center gap-2">
-                          <div className="text-gray-500 dark:text-gray-400 text-sm">
-                            Scroll to load more...
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            loadMoreThreads();
+                          }}
+                          disabled={loadingMore}
+                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                        >
+                          {loadingMore ? "Loading..." : "Load More (Manual)"}
+                        </button>
+                        {testMode && (
+                          <div className="text-xs text-orange-500 mt-2">
+                            🧪 Test Mode Active
                           </div>
-                          <button 
-                            onClick={loadMoreThreads}
-                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                          >
-                            Load More (Manual)
-                          </button>
-                        </div>
-                      )}
-                    </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                   )}
                   
                   {!hasMore && threads.length > 0 && (
@@ -233,7 +252,7 @@ const FeedPage: React.FC = () => {
                   
                   {/* Debug information */}
                   <div className="text-xs text-gray-400 p-2 bg-gray-100 dark:bg-gray-800 rounded">
-                    Debug: Threads: {threads.length}, Page: {currentPage}, HasMore: {hasMore.toString()}, Loading: {loadingMore.toString()}
+                    Debug: Threads: {threads.length}, Page: {currentPage}, HasMore: {hasMore.toString()}, Loading: {loadingMore.toString()}, TestMode: {testMode.toString()}
                   </div>
                 </>
               )}
