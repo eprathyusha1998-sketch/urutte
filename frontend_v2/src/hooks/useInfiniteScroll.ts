@@ -28,8 +28,14 @@ export const useInfiniteScroll = ({
     const observer = new IntersectionObserver(
       (entries) => {
         const target = entries[0];
+        console.log('👁️ Intersection observer triggered', { 
+          isIntersecting: target.isIntersecting, 
+          hasMore, 
+          loading, 
+          isFetching 
+        });
         if (target.isIntersecting && hasMore && !loading && !isFetching) {
-          console.log('Infinite scroll triggered - loading more content');
+          console.log('🚀 Infinite scroll triggered - loading more content');
           setIsFetching(true);
           onLoadMore().finally(() => {
             setIsFetching(false);
@@ -54,7 +60,7 @@ export const useInfiniteScroll = ({
         observerRef.current.disconnect();
       }
     };
-  }, [hasMore, loading, threshold]); // Removed onLoadMore from dependencies to prevent observer recreation
+  }, [hasMore, loading, threshold, isFetching]); // Removed onLoadMore to prevent observer recreation
 
   return { loadingRef, isFetching };
 };

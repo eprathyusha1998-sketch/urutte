@@ -53,35 +53,40 @@ const FeedPage: React.FC = () => {
   };
 
   const loadMoreThreads = useCallback(async () => {
-    console.log('loadMoreThreads called', { loadingMore, hasMore, currentPage });
+    console.log('🔄 loadMoreThreads called', { loadingMore, hasMore, currentPage });
     if (loadingMore || !hasMore) {
-      console.log('Skipping loadMoreThreads - already loading or no more data');
+      console.log('⏭️ Skipping loadMoreThreads - already loading or no more data');
       return;
     }
 
     try {
       setLoadingMore(true);
       const nextPage = currentPage + 1;
-      console.log('Loading page:', nextPage);
+      console.log('📄 Loading page:', nextPage);
       const response = await threadsApi.getFeed(nextPage, 30);
+      console.log('📊 API Response:', response);
       const newThreads = response.content || response;
-      console.log('Loaded threads:', newThreads.length);
+      console.log('📝 Loaded threads:', newThreads.length, 'new threads');
       
       if (newThreads.length > 0) {
-        setThreads(prev => [...prev, ...newThreads]);
+        setThreads(prev => {
+          const updated = [...prev, ...newThreads];
+          console.log('📈 Total threads after update:', updated.length);
+          return updated;
+        });
         setCurrentPage(nextPage);
         setHasMore(newThreads.length === 30);
-        console.log('Updated threads, hasMore:', newThreads.length === 30);
+        console.log('✅ Updated threads, hasMore:', newThreads.length === 30);
       } else {
         setHasMore(false);
-        console.log('No more threads available');
+        console.log('🏁 No more threads available');
       }
     } catch (error) {
-      console.error('Error loading more threads:', error);
+      console.error('❌ Error loading more threads:', error);
     } finally {
       setLoadingMore(false);
     }
-  }, [currentPage, hasMore]);
+  }, [currentPage, hasMore, loadingMore]);
 
   // Infinite scroll hook
   const { loadingRef } = useInfiniteScroll({
@@ -196,15 +201,23 @@ const FeedPage: React.FC = () => {
                   
                   {/* Loading indicator for infinite scroll */}
                   {hasMore && (
-                    <div ref={loadingRef} className="flex justify-center py-8 min-h-[100px]">
+                    <div ref={loadingRef} className="flex justify-center py-8 min-h-[100px] border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
                       {loadingMore ? (
                         <div className="flex flex-col items-center gap-2">
                           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                           <div className="text-gray-500 dark:text-gray-400 text-sm">Loading more...</div>
                         </div>
                       ) : (
-                        <div className="text-gray-500 dark:text-gray-400 text-sm">
-                          Scroll to load more...
+                        <div className="flex flex-col items-center gap-2">
+                          <div className="text-gray-500 dark:text-gray-400 text-sm">
+                            Scroll to load more...
+                          </div>
+                          <button 
+                            onClick={loadMoreThreads}
+                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                          >
+                            Load More (Manual)
+                          </button>
                         </div>
                       )}
                     </div>
@@ -217,6 +230,11 @@ const FeedPage: React.FC = () => {
                       </p>
                     </div>
                   )}
+                  
+                  {/* Debug information */}
+                  <div className="text-xs text-gray-400 p-2 bg-gray-100 dark:bg-gray-800 rounded">
+                    Debug: Threads: {threads.length}, Page: {currentPage}, HasMore: {hasMore.toString()}, Loading: {loadingMore.toString()}
+                  </div>
                 </>
               )}
             </div>
