@@ -19,7 +19,7 @@ public interface ThreadRepository extends JpaRepository<Thread, Long> {
     Page<Thread> findByUserAndIsDeletedFalseOrderByCreatedAtDesc(User user, Pageable pageable);
     
     // Find main threads (not replies) - excludes AI content for anonymous users
-    @Query("SELECT t FROM Thread t WHERE t.parentThread IS NULL AND t.isDeleted = false AND t.isPublic = true AND t.user.email NOT LIKE 'ai.assistant@%' AND t.user.email NOT LIKE '%@ai.%' ORDER BY t.createdAt DESC")
+    @Query("SELECT t FROM Thread t WHERE t.parentThread IS NULL AND t.isDeleted = false AND t.isPublic = true AND t.user.userType != 'ADMIN' ORDER BY t.createdAt DESC")
     Page<Thread> findByParentThreadIsNullAndIsDeletedFalseAndIsPublicTrueOrderByCreatedAtDesc(Pageable pageable);
     
     // Find replies to a specific thread
@@ -33,7 +33,7 @@ public interface ThreadRepository extends JpaRepository<Thread, Long> {
     List<Thread> findByRootThreadAndIsDeletedFalseOrderByThreadPathAsc(Thread rootThread);
     
     // Find threads by hashtag - excludes AI content unless user follows AI
-    @Query("SELECT t FROM Thread t JOIN t.hashtags th JOIN th.hashtag h WHERE h.tag = :hashtag AND t.isDeleted = false AND t.isPublic = true AND t.user.email NOT LIKE 'ai.assistant@%' AND t.user.email NOT LIKE '%@ai.%' ORDER BY t.createdAt DESC")
+    @Query("SELECT t FROM Thread t JOIN t.hashtags th JOIN th.hashtag h WHERE h.tag = :hashtag AND t.isDeleted = false AND t.isPublic = true AND t.user.userType != 'ADMIN' ORDER BY t.createdAt DESC")
     Page<Thread> findByHashtag(@Param("hashtag") String hashtag, Pageable pageable);
     
     // Find threads mentioning a user
@@ -41,7 +41,7 @@ public interface ThreadRepository extends JpaRepository<Thread, Long> {
     Page<Thread> findMentionsByUser(@Param("user") User user, Pageable pageable);
     
     // Find threads by content search - excludes AI content
-    @Query("SELECT t FROM Thread t WHERE t.content LIKE %:keyword% AND t.isDeleted = false AND t.isPublic = true AND t.user.email NOT LIKE 'ai.assistant@%' AND t.user.email NOT LIKE '%@ai.%' ORDER BY t.createdAt DESC")
+    @Query("SELECT t FROM Thread t WHERE t.content LIKE %:keyword% AND t.isDeleted = false AND t.isPublic = true AND t.user.userType != 'ADMIN' ORDER BY t.createdAt DESC")
     Page<Thread> findByContentContaining(@Param("keyword") String keyword, Pageable pageable);
     
     // Find threads by user and content
@@ -49,11 +49,11 @@ public interface ThreadRepository extends JpaRepository<Thread, Long> {
     Page<Thread> findByUserAndContentContaining(@Param("user") User user, @Param("keyword") String keyword, Pageable pageable);
     
     // Find threads by thread type - excludes AI content
-    @Query("SELECT t FROM Thread t WHERE t.threadType = :threadType AND t.isDeleted = false AND t.isPublic = true AND t.user.email NOT LIKE 'ai.assistant@%' AND t.user.email NOT LIKE '%@ai.%' ORDER BY t.createdAt DESC")
+    @Query("SELECT t FROM Thread t WHERE t.threadType = :threadType AND t.isDeleted = false AND t.isPublic = true AND t.user.userType != 'ADMIN' ORDER BY t.createdAt DESC")
     Page<Thread> findByThreadTypeAndIsDeletedFalseAndIsPublicTrueOrderByCreatedAtDesc(@Param("threadType") com.urutte.model.ThreadType threadType, Pageable pageable);
     
     // Find quoted threads - excludes AI content
-    @Query("SELECT t FROM Thread t WHERE t.quotedThread = :quotedThread AND t.isDeleted = false AND t.isPublic = true AND t.user.email NOT LIKE 'ai.assistant@%' AND t.user.email NOT LIKE '%@ai.%' ORDER BY t.createdAt DESC")
+    @Query("SELECT t FROM Thread t WHERE t.quotedThread = :quotedThread AND t.isDeleted = false AND t.isPublic = true AND t.user.userType != 'ADMIN' ORDER BY t.createdAt DESC")
     Page<Thread> findByQuotedThread(@Param("quotedThread") Thread quotedThread, Pageable pageable);
     
     // Find threads by thread level
@@ -69,26 +69,26 @@ public interface ThreadRepository extends JpaRepository<Thread, Long> {
     long countByParentThreadAndIsDeletedFalse(Thread parentThread);
     
     // Find threads with media - excludes AI content
-    @Query("SELECT t FROM Thread t WHERE t.media IS NOT EMPTY AND t.isDeleted = false AND t.isPublic = true AND t.user.email NOT LIKE 'ai.assistant@%' AND t.user.email NOT LIKE '%@ai.%' ORDER BY t.createdAt DESC")
+    @Query("SELECT t FROM Thread t WHERE t.media IS NOT EMPTY AND t.isDeleted = false AND t.isPublic = true AND t.user.userType != 'ADMIN' ORDER BY t.createdAt DESC")
     Page<Thread> findThreadsWithMedia(Pageable pageable);
     
     // Find pinned threads by user
     List<Thread> findByUserAndIsPinnedTrueAndIsDeletedFalseOrderByCreatedAtDesc(User user);
     
     // Find threads by date range - excludes AI content
-    @Query("SELECT t FROM Thread t WHERE t.createdAt BETWEEN :startDate AND :endDate AND t.isDeleted = false AND t.isPublic = true AND t.user.email NOT LIKE 'ai.assistant@%' AND t.user.email NOT LIKE '%@ai.%' ORDER BY t.createdAt DESC")
+    @Query("SELECT t FROM Thread t WHERE t.createdAt BETWEEN :startDate AND :endDate AND t.isDeleted = false AND t.isPublic = true AND t.user.userType != 'ADMIN' ORDER BY t.createdAt DESC")
     Page<Thread> findByDateRange(@Param("startDate") java.time.LocalDateTime startDate, @Param("endDate") java.time.LocalDateTime endDate, Pageable pageable);
     
     // Find trending threads (most liked in last 24 hours) - excludes AI content
-    @Query("SELECT t FROM Thread t WHERE t.createdAt >= :since AND t.isDeleted = false AND t.isPublic = true AND t.user.email NOT LIKE 'ai.assistant@%' AND t.user.email NOT LIKE '%@ai.%' ORDER BY t.likesCount DESC, t.createdAt DESC")
+    @Query("SELECT t FROM Thread t WHERE t.createdAt >= :since AND t.isDeleted = false AND t.isPublic = true AND t.user.userType != 'ADMIN' ORDER BY t.likesCount DESC, t.createdAt DESC")
     Page<Thread> findTrendingThreads(@Param("since") java.time.LocalDateTime since, Pageable pageable);
     
     // Find threads by multiple users (for feed) - excludes AI content
-    @Query("SELECT t FROM Thread t WHERE t.user IN :users AND t.isDeleted = false AND t.isPublic = true AND t.user.email NOT LIKE 'ai.assistant@%' AND t.user.email NOT LIKE '%@ai.%' ORDER BY t.createdAt DESC")
+    @Query("SELECT t FROM Thread t WHERE t.user IN :users AND t.isDeleted = false AND t.isPublic = true AND t.user.userType != 'ADMIN' ORDER BY t.createdAt DESC")
     Page<Thread> findByUsersIn(@Param("users") List<User> users, Pageable pageable);
     
     // Find threads with specific engagement threshold - excludes AI content
-    @Query("SELECT t FROM Thread t WHERE t.likesCount >= :minLikes AND t.isDeleted = false AND t.isPublic = true AND t.user.email NOT LIKE 'ai.assistant@%' AND t.user.email NOT LIKE '%@ai.%' ORDER BY t.likesCount DESC, t.createdAt DESC")
+    @Query("SELECT t FROM Thread t WHERE t.likesCount >= :minLikes AND t.isDeleted = false AND t.isPublic = true AND t.user.userType != 'ADMIN' ORDER BY t.likesCount DESC, t.createdAt DESC")
     Page<Thread> findByMinLikes(@Param("minLikes") Integer minLikes, Pageable pageable);
     
     // Find main threads for a specific user (handles all 4 privacy levels)
@@ -97,8 +97,8 @@ public interface ThreadRepository extends JpaRepository<Thread, Long> {
            "(" +
            // Show ALL logged in user created threads in the feed (regardless of thread type)
            "t.user.id = :userId OR " +
-           // Regular threads (non-AI users) - exclude user's own threads to avoid duplication
-           "(t.user.email NOT LIKE 'ai.assistant@%' AND t.user.email NOT LIKE '%@ai.%' AND t.user.id != :userId AND " +
+           // Regular threads (non-ADMIN users) - exclude user's own threads to avoid duplication
+           "(t.user.userType != 'ADMIN' AND t.user.id != :userId AND " +
            "(t.isPublic = true OR " + // Show all public posts from regular users
            "(t.isPublic = false AND t.replyPermission = 'FOLLOWERS' AND t.user IN " +
            "(SELECT f.following FROM Follow f WHERE f.follower.id = :userId)) OR " + // Show all followers-only posts from followed users
@@ -107,7 +107,7 @@ public interface ThreadRepository extends JpaRepository<Thread, Long> {
            "(SELECT tm.thread.id FROM ThreadMention tm WHERE tm.mentionedUser.id = :userId)))) " + // Show all threads where I'm mentioned
            "OR " +
            // AI-generated threads (only if user follows AI user)
-           "((t.user.email LIKE 'ai.assistant@%' OR t.user.email LIKE '%@ai.%') AND EXISTS " +
+           "(t.user.userType = 'ADMIN' AND EXISTS " +
            "(SELECT 1 FROM Follow f WHERE f.follower.id = :userId AND f.following.id = t.user.id))" +
            ") " +
            "ORDER BY t.createdAt DESC")
@@ -119,8 +119,8 @@ public interface ThreadRepository extends JpaRepository<Thread, Long> {
            "(" +
            // Show ALL logged in user created threads in the feed (regardless of thread type)
            "t.user.id = :userId OR " +
-           // Regular threads (non-AI users) - exclude user's own threads to avoid duplication
-           "(t.user.email NOT LIKE 'ai.assistant@%' AND t.user.email NOT LIKE '%@ai.%' AND t.user.id != :userId AND " +
+           // Regular threads (non-ADMIN users) - exclude user's own threads to avoid duplication
+           "(t.user.userType != 'ADMIN' AND t.user.id != :userId AND " +
            "(t.isPublic = true OR " + // Show all public posts from regular users
            "(t.isPublic = false AND t.replyPermission = 'FOLLOWERS' AND t.user IN " +
            "(SELECT f.following FROM Follow f WHERE f.follower.id = :userId)) OR " + // Show all followers-only posts from followed users

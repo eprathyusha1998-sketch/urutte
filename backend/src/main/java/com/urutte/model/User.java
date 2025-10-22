@@ -56,6 +56,10 @@ public class User {
     @Column(nullable = false)
     private Boolean isPrivate = false;
     
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private UserType userType = UserType.PUBLIC;
+    
     @Column(nullable = false)
     private Boolean isActive = true;
     
@@ -192,6 +196,9 @@ public class User {
 
     public Boolean getIsPrivate() { return isPrivate; }
     public void setIsPrivate(Boolean isPrivate) { this.isPrivate = isPrivate; }
+
+    public UserType getUserType() { return userType; }
+    public void setUserType(UserType userType) { this.userType = userType; }
 
     public Boolean getIsActive() { return isActive; }
     public void setIsActive(Boolean isActive) { this.isActive = isActive; }
