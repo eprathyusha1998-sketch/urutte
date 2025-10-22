@@ -110,7 +110,7 @@ public interface ThreadRepository extends JpaRepository<Thread, Long> {
            "(t.user.userType = 'ADMIN' AND EXISTS " +
            "(SELECT 1 FROM Follow f WHERE f.follower.id = :userId AND f.following.id = t.user.id))" +
            ") " +
-           "ORDER BY t.createdAt DESC")
+           "ORDER BY CASE WHEN t.user.id = :userId THEN 0 ELSE 1 END, t.createdAt DESC")
     Page<Thread> findMainThreadsForUser(@Param("userId") String userId, Pageable pageable);
     
     // Find main threads for a specific user with AI topic filtering
@@ -129,11 +129,11 @@ public interface ThreadRepository extends JpaRepository<Thread, Long> {
            "(SELECT tm.thread.id FROM ThreadMention tm WHERE tm.mentionedUser.id = :userId)))) " + // Show all threads where I'm mentioned
            "OR " +
            // AI-generated threads (only if user follows AI user AND topic matches user's liked topics)
-           "((t.user.email LIKE '%ai%' OR t.user.email LIKE '%assistant%') AND EXISTS " +
+           "(t.user.userType = 'ADMIN' AND EXISTS " +
            "(SELECT 1 FROM Follow f WHERE f.follower.id = :userId AND f.following.id = t.user.id) AND " +
            "EXISTS (SELECT 1 FROM AiGeneratedThread agt JOIN agt.topic topic JOIN UserTopic ut " +
            "ON ut.topic.id = topic.id WHERE agt.thread.id = t.id AND ut.user.id = :userId))" +
            ") " +
-           "ORDER BY t.createdAt DESC")
+           "ORDER BY CASE WHEN t.user.id = :userId THEN 0 ELSE 1 END, t.createdAt DESC")
     Page<Thread> findMainThreadsForUserWithTopicFilter(@Param("userId") String userId, Pageable pageable);
 }

@@ -4,7 +4,7 @@ import { NotificationProvider } from './contexts/NotificationContext';
 import { LoadingProvider } from './contexts/LoadingContext';
 import GlobalLoader from './components/GlobalLoader';
 import HomePage from './pages/HomePage';
-import FeedPage from './pages/FeedPage';
+import FeedPage from './pages/FeedPageRefactored';
 import MessagesPage from './pages/MessagesPage';
 import ThreadPage from './pages/ThreadPage';
 import ProfilePage from './pages/ProfilePage';

@@ -1,15 +1,18 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { IonIcon } from '@ionic/react';
+import { add } from 'ionicons/icons';
 import { threadsApi, postsApi } from '../services/api';
 import { Thread, User } from '../types.d';
 import { useAuth, useThreadActions, useInfiniteScroll } from '../hooks';
-import Sidebar from '../components/SidebarRefactored';
-import ThreadCard from '../components/ThreadCardRefactored';
+import Sidebar from '../components/Sidebar';
+import ThreadCard from '../components/ThreadCard';
 import NewThreadModal from '../components/NewThreadModal';
 import SuggestedUsers from '../components/SuggestedUsers';
 import FollowRequests from '../components/FollowRequests';
 import TopicSuggestionPanel from '../components/TopicSuggestionPanel';
 import { ROUTES, DYNAMIC_ROUTES } from '../constants';
+import { generateInitials, getInitialsBackgroundColor } from '../utils/profileUtils';
 
 const FeedPage: React.FC = () => {
   const navigate = useNavigate();
@@ -22,7 +25,6 @@ const FeedPage: React.FC = () => {
   const [hasMore, setHasMore] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
   const [showNewThreadModal, setShowNewThreadModal] = useState(false);
-  const [testMode, setTestMode] = useState(true); // Test mode to always show loading element
 
   useEffect(() => {
     if (!authLoading && !currentUser) {
@@ -38,14 +40,11 @@ const FeedPage: React.FC = () => {
   const fetchFeed = async () => {
     try {
       setLoading(true);
-      console.log('Fetching initial feed...');
       const feedData = await threadsApi.getFeed(0, 30);
       const threadsData = feedData.content || feedData;
-      console.log('Initial feed loaded:', threadsData.length, 'threads');
       setThreads(threadsData);
       setCurrentPage(0);
       setHasMore(threadsData.length === 30);
-      console.log('🔍 Initial hasMore set to:', threadsData.length === 30, 'threads:', threadsData.length);
     } catch (error) {
       console.error('Error fetching feed:', error);
     } finally {
@@ -54,33 +53,22 @@ const FeedPage: React.FC = () => {
   };
 
   const loadMoreThreads = useCallback(async () => {
-    console.log('🔄 loadMoreThreads called', { loadingMore, hasMore, currentPage });
     if (loadingMore || !hasMore) {
-      console.log('⏭️ Skipping loadMoreThreads - already loading or no more data');
       return;
     }
 
     try {
       setLoadingMore(true);
       const nextPage = currentPage + 1;
-      console.log('📄 Loading page:', nextPage);
       const response = await threadsApi.getFeed(nextPage, 30);
-      console.log('📊 API Response:', response);
       const newThreads = response.content || response;
-      console.log('📝 Loaded threads:', newThreads.length, 'new threads');
       
       if (newThreads.length > 0) {
-        setThreads(prev => {
-          const updated = [...prev, ...newThreads];
-          console.log('📈 Total threads after update:', updated.length);
-          return updated;
-        });
+        setThreads(prev => [...prev, ...newThreads]);
         setCurrentPage(nextPage);
         setHasMore(newThreads.length === 30);
-        console.log('✅ Updated threads, hasMore:', newThreads.length === 30);
       } else {
         setHasMore(false);
-        console.log('🏁 No more threads available');
       }
     } catch (error) {
       console.error('❌ Error loading more threads:', error);
@@ -96,65 +84,63 @@ const FeedPage: React.FC = () => {
     onLoadMore: loadMoreThreads,
   });
 
-  const handleLikePost = async (threadId: number) => {
+  const handleLogout = async () => {
     try {
-      const thread = threads.find(t => t.id === threadId);
-      if (!thread) return;
+      await logout();
+      navigate(ROUTES.LOGIN);
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Force logout even if API call fails
+      navigate(ROUTES.LOGIN);
+    }
+  };
 
-      const updatedThread = await handleLike(threadId, thread);
-      setThreads(prev => 
-        prev.map(t => t.id === threadId ? updatedThread : t)
-      );
+  const handleLikeThread = async (threadId: number) => {
+    try {
+      await threadsApi.likeThread(threadId);
+      // Refresh the feed to get updated counts
+      fetchFeed();
     } catch (error) {
       console.error('Error liking thread:', error);
     }
   };
 
-  const handleRepostPost = async (threadId: number, quoteContent?: string) => {
+  const handleRepostThread = async (threadId: number, quoteContent?: string) => {
     try {
-      const thread = threads.find(t => t.id === threadId);
-      if (!thread) return;
-
       if (quoteContent) {
         // Handle quote repost
         await postsApi.quoteRepost(quoteContent, threadId);
         // Refresh feed to show the new quote repost
         fetchFeed();
       } else {
-        const updatedThread = await handleRepost(threadId, thread);
-        setThreads(prev => 
-          prev.map(t => t.id === threadId ? updatedThread : t)
-        );
+        // Handle simple repost
+        await threadsApi.repostThread(threadId);
+        // Refresh the feed to get updated counts
+        fetchFeed();
       }
     } catch (error) {
       console.error('Error reposting thread:', error);
     }
   };
 
-  const handleDeletePost = async (threadId: number) => {
+  const handleDeleteThread = async (threadId: number) => {
     try {
-      await handleDelete(threadId);
+      await threadsApi.deleteThread(threadId);
       setThreads(prev => prev.filter(t => t.id !== threadId));
     } catch (error) {
       console.error('Error deleting thread:', error);
     }
   };
 
-  const handleReplyToPost = (threadId: number) => {
-    // Navigate to the thread page where user can reply
-    navigate(DYNAMIC_ROUTES.THREAD_BY_ID(threadId));
-  };
-
-  if (authLoading || loading) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gray-100 dark:bg-slate-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading feed...</p>
+        </div>
       </div>
     );
-  }
-
-  if (!currentUser) {
-    return null;
   }
 
   return (
@@ -166,97 +152,111 @@ const FeedPage: React.FC = () => {
           document.documentElement.classList.toggle('dark');
         }}
         isDarkMode={document.documentElement.classList.contains('dark')}
-        onLogout={logout}
+        onLogout={handleLogout}
         onCreateThread={() => setShowNewThreadModal(true)}
         isCreateModalOpen={showNewThreadModal}
       />
 
       {/* Main Content */}
       <main id="site__main" className="p-2.5 h-[calc(100vh-var(--m-top))] mt-[--m-top] bg-white">
-        <div className="max-w-6xl mx-auto flex gap-12">
+        <div className="max-w-6xl mx-auto flex gap-12" id="js-oversized">
           {/* Feed Content */}
           <div className="flex-1 max-w-2xl">
-            <div className="space-y-4">
-              {threads.length === 0 ? (
-                <div className="text-center py-12">
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                    No threads yet
-                  </h3>
-                  <p className="text-gray-500 dark:text-gray-400">
-                    Start by creating your first thread!
-                  </p>
-                </div>
-              ) : (
-                <>
-                  {threads.map((thread) => (
-                    <ThreadCard
-                      key={thread.id}
-                      thread={thread}
-                      currentUser={currentUser}
-                      onLike={handleLikePost}
-                      onRepost={handleRepostPost}
-                      onDelete={handleDeletePost}
-                      onReply={handleReplyToPost}
-                    />
-                  ))}
-                  
-                  {/* Loading indicator for infinite scroll - Always show for testing */}
-                  {(hasMore || testMode) && (
-                    <div 
-                      ref={loadingRef} 
-                      onClick={() => {
-                        console.log('🖱️ Loading area clicked');
-                        if (!loadingMore && (hasMore || testMode)) {
-                          loadMoreThreads();
-                        }
+            {/* Header */}
+            <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6 dark:bg-dark2 dark:border-slate-700">
+              <div className="flex items-center gap-3">
+                <h1 className="text-lg font-bold text-gray-900 dark:text-white">Uruttus for You! 🎯</h1>
+              </div>
+              <p className="text-gray-600 dark:text-gray-400 mt-2">Latest urutus from people you follow</p>
+            </div>
+
+          {/* Center Feed */}
+          <div className="space-y-6">
+            {/* Create Post Button */}
+            <div className="bg-white rounded-2xl border border-gray-200 p-4 dark:bg-dark2 dark:border-slate-700">
+              <button
+                onClick={() => setShowNewThreadModal(true)}
+                className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
+              >
+                <div className="w-10 h-10 rounded-full bg-gray-300 dark:bg-slate-600 flex items-center justify-center overflow-hidden">
+                  {currentUser?.picture ? (
+                    <img 
+                      src={currentUser.picture} 
+                      alt={currentUser.name}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        const fallback = target.nextElementSibling as HTMLElement;
+                        if (fallback) fallback.style.display = 'flex';
                       }}
-                      className="flex justify-center py-8 min-h-[100px] border-2 border-dashed border-blue-500 dark:border-blue-400 rounded-lg bg-blue-50 dark:bg-blue-900/20 cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
-                    >
+                    />
+                  ) : null}
+                  <div 
+                    className={`w-full h-full ${getInitialsBackgroundColor(currentUser?.name || '')} flex items-center justify-center rounded-full`}
+                    style={{ display: currentUser?.picture ? 'none' : 'flex' }}
+                  >
+                    <span className="text-white text-sm font-semibold">
+                      {generateInitials(currentUser?.name || '')}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex-1 text-left">
+                  <span className="text-gray-500 dark:text-gray-400">Lets Urutte!</span>
+                </div>
+                <IonIcon icon={add} className="text-xl text-gray-400 dark:text-gray-500" />
+              </button>
+            </div>
+                                  
+            {/* Urutus Feed */}
+            {threads.length === 0 ? (
+              <div className="bg-white rounded-2xl border border-gray-200 p-8 text-center dark:bg-dark2 dark:border-slate-700">
+                <p className="text-gray-500 dark:text-white/70">No urutus yet. Start the conversation!</p>
+              </div>
+            ) : (
+              <>
+                {threads.map((thread) => (
+                  <ThreadCard
+                    key={thread.id}
+                    thread={thread}
+                    currentUser={currentUser}
+                    onLike={handleLikeThread}
+                    onRepost={handleRepostThread}
+                    onDelete={handleDeleteThread}
+                    onBookmark={(threadId) => {
+                      // Handle bookmark functionality
+                      console.log('Bookmark thread:', threadId);
+                    }}
+                    onReaction={(threadId, reactionType) => {
+                      // Handle reaction functionality
+                      console.log('Add reaction:', threadId, reactionType);
+                    }}
+                  />
+                ))}
+                
+                {/* Loading indicator for infinite scroll */}
+                {hasMore && (
+                  <div ref={loadingRef} className="flex justify-center py-8">
                     {loadingMore ? (
-                      <div className="flex flex-col items-center gap-2">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                        <div className="text-gray-500 dark:text-gray-400 text-sm">Loading more...</div>
-                      </div>
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                     ) : (
-                      <div className="flex flex-col items-center gap-2">
-                        <div className="text-gray-500 dark:text-gray-400 text-sm">
-                          {hasMore ? "Click here or scroll to load more..." : testMode ? "Test Mode - Click to test loading" : "No more content available"}
-                        </div>
-                        <button 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            loadMoreThreads();
-                          }}
-                          disabled={loadingMore}
-                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-                        >
-                          {loadingMore ? "Loading..." : "Load More (Manual)"}
-                        </button>
-                        {testMode && (
-                          <div className="text-xs text-orange-500 mt-2">
-                            🧪 Test Mode Active
-                          </div>
-                        )}
+                      <div className="text-gray-500 dark:text-gray-400 text-sm">
+                        Scroll to load more...
                       </div>
                     )}
                   </div>
-                  )}
-                  
-                  {!hasMore && threads.length > 0 && (
-                    <div className="text-center py-8">
-                      <p className="text-gray-500 dark:text-gray-400 text-sm">
-                        You've reached the end of the feed
-                      </p>
-                    </div>
-                  )}
-                  
-                  {/* Debug information */}
-                  <div className="text-xs text-gray-400 p-2 bg-gray-100 dark:bg-gray-800 rounded">
-                    Debug: Threads: {threads.length}, Page: {currentPage}, HasMore: {hasMore.toString()}, Loading: {loadingMore.toString()}, TestMode: {testMode.toString()}
+                )}
+                
+                {!hasMore && threads.length > 0 && (
+                  <div className="text-center py-8">
+                    <p className="text-gray-500 dark:text-gray-400 text-sm">
+                      You've reached the end of the feed
+                    </p>
                   </div>
-                </>
-              )}
-            </div>
+                )}
+              </>
+            )}
+          </div>
           </div>
           
           {/* Right Sidebar */}

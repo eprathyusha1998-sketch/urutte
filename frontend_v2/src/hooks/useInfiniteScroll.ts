@@ -22,14 +22,7 @@ export const useInfiniteScroll = ({
     const observer = new IntersectionObserver(
       (entries) => {
         const target = entries[0];
-        console.log('👁️ Intersection observer triggered', { 
-          isIntersecting: target.isIntersecting, 
-          hasMore, 
-          loading, 
-          isFetching 
-        });
         if (target.isIntersecting && hasMore && !loading && !isFetching) {
-          console.log('🚀 Infinite scroll triggered - loading more content');
           setIsFetching(true);
           onLoadMore().finally(() => {
             setIsFetching(false);
@@ -44,19 +37,41 @@ export const useInfiniteScroll = ({
 
     observerRef.current = observer;
 
-    if (loadingRef.current) {
-      observer.observe(loadingRef.current);
-      console.log('Intersection observer attached to loading element');
-    } else {
-      console.log('⚠️ loadingRef.current is null - observer not attached');
-    }
+    // Use a longer delay to ensure the loading element is rendered
+    const attachObserver = () => {
+      if (loadingRef.current) {
+        observer.observe(loadingRef.current);
+        
+        // Check visibility after a short delay
+        setTimeout(() => {
+          if (loadingRef.current) {
+            const rect = loadingRef.current.getBoundingClientRect();
+            const isVisible = rect.top < window.innerHeight && rect.bottom > 0;
+            
+            // If element is already visible and conditions are met, trigger immediately
+            if (isVisible && hasMore && !loading && !isFetching) {
+              setIsFetching(true);
+              onLoadMore().finally(() => {
+                setIsFetching(false);
+              });
+            } else {
+            }
+          }
+        }, 50);
+      } else {
+        setTimeout(attachObserver, 100);
+      }
+    };
+
+    // Start trying to attach the observer
+    attachObserver();
 
     return () => {
       if (observerRef.current) {
         observerRef.current.disconnect();
       }
     };
-  }, [hasMore, loading, threshold, isFetching]); // Removed onLoadMore to prevent observer recreation
+  }, [hasMore, loading, threshold]); // Removed isFetching to prevent observer recreation
 
   return { loadingRef, isFetching };
 };
